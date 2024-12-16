@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -51,6 +52,10 @@ import com.example.summonerscompass.presentation.profile_screen.CraftingScreen
 import com.example.summonerscompass.presentation.profile_screen.ProfileScreen
 import com.example.summonerscompass.routes.Routes
 import com.example.summonerscompass.ui.theme.SummonersCompassTheme
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.rememberCameraPositionState
 
 
 data class  BottomNavigationItem(

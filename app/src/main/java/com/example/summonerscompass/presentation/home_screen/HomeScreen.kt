@@ -1,31 +1,30 @@
 package com.example.summonerscompass.presentation.home_screen
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.summonerscompass.R
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -41,14 +40,47 @@ fun HomeScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "Home Screen",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            MapScreen()
+
+        }
+    }
+
+}
+
+
+@Composable
+fun MapScreen() {
+    val atasehir = LatLng(40.9971, 29.1007)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(atasehir, 15f)
+    }
+
+    // Container para a GoogleMap
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), // Espaçamento opcional ao redor do container
+        contentAlignment = Alignment.TopCenter // Centraliza o mapa no container
     ) {
-
-        Text(
-            text = "Home Screen",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-    } }
-
+        Box(
+            modifier = Modifier
+                .width(350.dp) // Defina a largura desejada
+                .height(200.dp) // Defina a altura desejada
+                .clip(RoundedCornerShape(16.dp)) // Bordas arredondadas opcionais
+                .border(1.dp, Color.Gray) // Borda opcional
+        ) {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState
+            )
+        }
+    }
 }

@@ -70,4 +70,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     val nav_version = "2.8.4"
     implementation("androidx.navigation:navigation-compose:$nav_version")
+
+    implementation("com.google.maps.android:maps-compose:4.3.3")
 }
