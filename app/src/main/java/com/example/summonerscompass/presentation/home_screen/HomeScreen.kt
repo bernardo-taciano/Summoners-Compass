@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,9 +27,12 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -40,6 +44,10 @@ fun HomeScreen(
 ) {
     val champions by viewModel.champions.collectAsState()
     val square by viewModel.championSquare.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.getChampions()
+    }
 
 
     Scaffold { innerPadding ->
@@ -57,10 +65,6 @@ fun HomeScreen(
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
-
-            Button(onClick = { viewModel.getChampions() }) {
-                Text("Get Aatrox")
-            }
 
             val championMap = champions?.data
             val name = championMap?.get("Aatrox")?.name
@@ -85,7 +89,7 @@ fun HomeScreen(
                 )
             }
 
-            MapScreen()
+            MapScreen(viewModel)
 
 
         }
@@ -95,10 +99,17 @@ fun HomeScreen(
 
 
 @Composable
-fun MapScreen() {
+fun MapScreen(viewModel: HomeScreenViewModel) {
     val atasehir = LatLng(40.9971, 29.1007)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(atasehir, 15f)
+    }
+
+    val randomSprites by viewModel.randomSprites.collectAsState()
+
+    // launched effect triggers only once to prevent constant generation
+    LaunchedEffect(Unit) {
+        viewModel.generateRandomSprites(5)
     }
 
     // Container para a GoogleMap
@@ -118,7 +129,16 @@ fun MapScreen() {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
-            )
+            ){
+                randomSprites.forEach{ sprite ->
+                    Marker(
+                        state = MarkerState(position = sprite.position),
+                        title = sprite.name,
+                        icon = BitmapDescriptorFactory.fromBitmap(sprite.image)
+                    )
+                }
+
+            }
         }
     }
 }
