@@ -41,6 +41,8 @@ import com.example.summonerscompass.routes.Routes
 import com.example.summonerscompass.ui.theme.SummonersCompassTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Query
 import com.google.firebase.ktx.Firebase
 
 
@@ -51,6 +53,7 @@ data class  BottomNavigationItem(
     val unselectedIcon : ImageVector,
 )
 
+private lateinit var db: FirebaseDatabase
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -63,6 +66,7 @@ class MainActivity : ComponentActivity() {
         // Initialize Firebase Auth and check if the user is signed in
         auth = Firebase.auth
 
+
         if (auth.currentUser == null) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, LoginActivity::class.java))
@@ -71,10 +75,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // user is signed in: proceed
+        val uid = auth.uid
         enableEdgeToEdge()
         setContent {
             SummonersCompassTheme {
-                MainScreen()
+                MainScreen(uid = uid!!)
             }
         }
     }
@@ -82,7 +87,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(modifier: Modifier = Modifier, uid: String) {
     // NavController
     val navController = rememberNavController()
 
@@ -121,7 +126,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
             BottomNavigationBar(navController, bottomNavItems)
         }
     ) { innerPadding ->
-        NavigationHost(navController = navController, modifier = Modifier.padding(innerPadding))
+        NavigationHost(navController = navController, modifier = Modifier.padding(innerPadding), uid)
     }
 }
 
@@ -159,7 +164,7 @@ fun BottomNavigationBar(navController: NavHostController, items: List<BottomNavi
 
 
 @Composable
-fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifier) {
+fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifier, uid: String) {
     NavHost(
         navController = navController,
         startDestination = Routes.homeScreen,
@@ -168,13 +173,10 @@ fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifi
         composable(Routes.homeScreen) { HomeScreen(navController = navController, viewModel = HomeScreenViewModel()) }
         composable(Routes.glossaryScreen) { GlossaryScreen(navController = navController) }
         composable(Routes.craftingScreen) { CraftingScreen(navController = navController) }
-        composable(Routes.profileScreen) {
-            ProfileScreen(
-                userName = "André Correia",
-                userEmail = "andre.correia@gmail.com",
-                onEditProfile = {  },
-                navController = navController
-            )
-        }
+        composable(Routes.profileScreen) { ProfileScreen(uid, navController = navController) }
     }
+}
+
+fun onResult(name: String?, email: String?) {
+
 }
