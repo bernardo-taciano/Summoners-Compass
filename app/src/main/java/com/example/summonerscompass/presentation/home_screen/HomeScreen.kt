@@ -1,6 +1,7 @@
 package com.example.summonerscompass.presentation.home_screen
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,12 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -67,18 +71,18 @@ fun HomeScreen(
             )
 
             val championMap = champions?.data
-            val name = championMap?.get("Aatrox")?.name
+            val name = championMap?.get("Gragas")?.name
             if (name != null) {
                 Text(text = name)
             }
 
-            val res = championMap?.get("Aatrox")?.image?.full
+            val res = championMap?.get("Gragas")?.image?.full
             Button(onClick = {
                 if (res != null) {
                     viewModel.getChampionSquare(res)
                 }
             }) {
-                Text("Get Aatrox Square")
+                Text("Get Gragas Square")
             }
 
             square?.let {
@@ -100,17 +104,13 @@ fun HomeScreen(
 
 @Composable
 fun MapScreen(viewModel: HomeScreenViewModel) {
-    val atasehir = LatLng(40.9971, 29.1007)
+    val atasehir = LatLng(38.7169, -9.1399)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(atasehir, 15f)
     }
-
+    val context = LocalContext.current
+    val pinLocation by viewModel.pinLocation.collectAsState()
     val randomSprites by viewModel.randomSprites.collectAsState()
-
-    // launched effect triggers only once to prevent constant generation
-    LaunchedEffect(Unit) {
-        viewModel.generateRandomSprites(5)
-    }
 
     // Container para a GoogleMap
     Box(
@@ -128,8 +128,23 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         ) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState
+                cameraPositionState = cameraPositionState,
+                onMapClick = { latLng ->
+                    viewModel.updatePinLocation(latLng) // place pin on map
+                }
             ){
+                // Add a pin marker if pinLocation is set
+                pinLocation?.let { location ->
+                    Marker(
+                        state = MarkerState(position = location) ,
+                        title = "Teleport Here",
+                        onClick = {
+                            viewModel.updatePinLocation(location)
+                            true
+                        }
+                    )
+                }
+
                 randomSprites.forEach{ sprite ->
                     Marker(
                         state = MarkerState(position = sprite.position),
@@ -139,6 +154,14 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 }
 
             }
+        }
+        Button(onClick = {
+            pinLocation?.let {
+                viewModel.teleportTo(it)
+                Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
+            }
+        }) {
+            Text("Teleport to Pin Location")
         }
     }
 }
