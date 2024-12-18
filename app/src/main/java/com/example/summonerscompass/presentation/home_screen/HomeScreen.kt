@@ -1,6 +1,7 @@
 package com.example.summonerscompass.presentation.home_screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -37,6 +39,8 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel
 ) {
     val champions by viewModel.champions.collectAsState()
+    val square by viewModel.championSquare.collectAsState()
+
 
     Scaffold { innerPadding ->
         Column(
@@ -62,6 +66,23 @@ fun HomeScreen(
             val name = championMap?.get("Aatrox")?.name
             if (name != null) {
                 Text(text = name)
+            }
+
+            val res = championMap?.get("Aatrox")?.image?.full
+            Button(onClick = {
+                if (res != null) {
+                    viewModel.getChampionSquare(res)
+                }
+            }) {
+                Text("Get Aatrox Square")
+            }
+
+            square?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Champion Square",
+                    modifier = Modifier.padding(16.dp)
+                )
             }
 
             MapScreen()
