@@ -25,6 +25,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Login Activity -->
+        <activity android:name=".LoginActivity" />
+
+        <!-- Register Activity -->
+        <activity android:name=".RegisterActivity" />
+
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAdWeylLqfIAm5Xzw1OK1XqjNP16bq8hPY"/>
     </application>

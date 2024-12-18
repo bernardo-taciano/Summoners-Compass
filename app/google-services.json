@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960491378277",
+    "project_id": "summoners-compass",
+    "storage_bucket": "summoners-compass.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960491378277:android:e5f1170f5e4db646f9588c",
+        "android_client_info": {
+          "package_name": "com.example.summonerscompass"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6GiYSyg9Znq7jfW0DAi8R3LM3aHe4cSI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
