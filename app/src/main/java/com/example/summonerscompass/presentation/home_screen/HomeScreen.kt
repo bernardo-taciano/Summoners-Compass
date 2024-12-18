@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,8 +33,11 @@ import com.google.maps.android.compose.rememberCameraPositionState
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    viewModel: HomeScreenViewModel
 ) {
+    val champions by viewModel.champions.collectAsState()
+
     Scaffold { innerPadding ->
         Column(
             modifier = modifier
@@ -48,7 +54,18 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
+            Button(onClick = { viewModel.getChampions() }) {
+                Text("Get Aatrox")
+            }
+
+            val championMap = champions?.data
+            val name = championMap?.get("Aatrox")?.name
+            if (name != null) {
+                Text(text = name)
+            }
+
             MapScreen()
+
 
         }
     }
