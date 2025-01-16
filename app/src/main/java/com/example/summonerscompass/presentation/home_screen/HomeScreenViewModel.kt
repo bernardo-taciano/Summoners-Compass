@@ -75,7 +75,6 @@ class HomeScreenViewModel() : ViewModel() {
 
     private fun saveSpriteToGlossary(sprite: RandomSprite) {
         viewModelScope.launch {
-            val champion = DataDragonApi.retrofitService.getChampion(sprite.name)
             uid?.let {
                 val ref = db.reference.child("users").child(it).child("glossary").push()
                 ref.setValue(sprite.name)

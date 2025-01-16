@@ -25,7 +25,7 @@ interface DataDragonApiService{
     @GET("data/en_US/champion/{champ}.json")
     suspend fun getChampion(
         @Path("champ") champ: String
-    ): Champion
+    ): ChampionResponse
 
     @GET("img/champion/{res}")
     suspend fun getChampionSquare(

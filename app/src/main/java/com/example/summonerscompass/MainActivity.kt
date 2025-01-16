@@ -33,6 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreen
+import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreenViewModel
 import com.example.summonerscompass.presentation.home_screen.HomeScreen
 import com.example.summonerscompass.presentation.home_screen.HomeScreenViewModel
 import com.example.summonerscompass.presentation.profile_screen.CraftingScreen
@@ -171,7 +172,7 @@ fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifi
         modifier = modifier
     ) {
         composable(Routes.homeScreen) { HomeScreen(navController = navController, viewModel = HomeScreenViewModel()) }
-        composable(Routes.glossaryScreen) { GlossaryScreen(navController = navController) }
+        composable(Routes.glossaryScreen) { GlossaryScreen(navController = navController, viewModel = GlossaryScreenViewModel()) }
         composable(Routes.craftingScreen) { CraftingScreen(navController = navController) }
         composable(Routes.profileScreen) { ProfileScreen(uid, navController = navController) }
     }
