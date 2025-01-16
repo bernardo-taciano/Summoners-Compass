@@ -1,5 +1,6 @@
 package com.example.summonerscompass.network
 
+import Champion
 import ChampionResponse
 import com.google.gson.GsonBuilder
 import okhttp3.ResponseBody
@@ -20,6 +21,11 @@ private val retrofit = Retrofit.Builder()
 interface DataDragonApiService{
     @GET("data/en_US/champion.json")
     suspend fun getChampions(): ChampionResponse
+
+    @GET("data/en_US/champion/{champ}.json")
+    suspend fun getChampion(
+        @Path("champ") champ: String
+    ): Champion
 
     @GET("img/champion/{res}")
     suspend fun getChampionSquare(

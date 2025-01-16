@@ -4,11 +4,17 @@ import Champion
 import ChampionResponse
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.location.Location
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summonerscompass.models.RandomSprite
 import com.example.summonerscompass.network.DataDragonApi
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +23,11 @@ import okhttp3.ResponseBody
 import kotlin.random.Random
 
 class HomeScreenViewModel() : ViewModel() {
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseDatabase.getInstance("https://summoners-compass-default-rtdb.europe-west1.firebasedatabase.app")
+
+    private val uid = auth.uid
+
     private val _champions = MutableStateFlow<ChampionResponse?>(null)
     val champions: StateFlow<ChampionResponse?> = _champions
 
@@ -41,6 +52,33 @@ class HomeScreenViewModel() : ViewModel() {
             while (true) {
                 generateRandomSprites(5)
                 delay(5 * 60 * 1000L) // 5 minutes in milliseconds
+            }
+        }
+    }
+
+    fun consumeSprites(userLocation: LatLng, radius: Float) {
+        viewModelScope.launch {
+            for(sprite in _randomSprites.value) {
+                val distance = FloatArray(1) // para guardar o resultado do calculo da distancia
+                Location.distanceBetween(
+                    userLocation.latitude, userLocation.longitude,
+                    sprite.position.latitude, sprite.position.longitude,
+                    distance
+                )
+
+                if(distance[0] <= radius) {
+                    saveSpriteToGlossary(sprite)
+                }
+            }
+        }
+    }
+
+    private fun saveSpriteToGlossary(sprite: RandomSprite) {
+        viewModelScope.launch {
+            val champion = DataDragonApi.retrofitService.getChampion(sprite.name)
+            uid?.let {
+                val ref = db.reference.child("users").child(it).child("glossary").push()
+                ref.setValue(sprite.name)
             }
         }
     }

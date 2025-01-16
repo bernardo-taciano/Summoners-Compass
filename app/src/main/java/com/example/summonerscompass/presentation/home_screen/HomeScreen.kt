@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,11 +30,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -112,10 +112,11 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
     val pinLocation by viewModel.pinLocation.collectAsState()
     val randomSprites by viewModel.randomSprites.collectAsState()
 
+    val radius = 50f
+
     // Container para a GoogleMap
     Box(
         modifier = Modifier
-            .fillMaxSize()
             .padding(16.dp), // Espaçamento opcional ao redor do container
         contentAlignment = Alignment.TopCenter // Centraliza o mapa no container
     ) {
@@ -146,6 +147,14 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 }
 
                 randomSprites.forEach{ sprite ->
+                    Circle(
+                        center = sprite.position,
+                        radius = radius.toDouble(),
+                        fillColor = Color(0x3300FF00),
+                        strokeColor = Color.Green,
+                        strokeWidth = 2f
+                    )
+
                     Marker(
                         state = MarkerState(position = sprite.position),
                         title = sprite.name,
@@ -155,6 +164,12 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
 
             }
         }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize(),
+    ) {
         Button(onClick = {
             pinLocation?.let {
                 viewModel.teleportTo(it)
@@ -163,5 +178,17 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         }) {
             Text("Teleport to Pin Location")
         }
+
+        Button(onClick = {
+            pinLocation?.let {
+                viewModel.consumeSprites(it, radius)
+                Toast.makeText(context, "Nearby Sprites Consumed", Toast.LENGTH_SHORT).show()
+            }
+        }) {
+            Text("Consume Nearby Sprites")
+        }
     }
+
+
+
 }
