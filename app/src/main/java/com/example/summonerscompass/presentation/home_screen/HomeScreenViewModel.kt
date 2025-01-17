@@ -19,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import kotlin.random.Random
 
@@ -58,16 +59,24 @@ class HomeScreenViewModel() : ViewModel() {
 
     fun consumeSprites(userLocation: LatLng, radius: Float) {
         viewModelScope.launch {
-            for(sprite in _randomSprites.value) {
-                val distance = FloatArray(1) // para guardar o resultado do calculo da distancia
-                Location.distanceBetween(
-                    userLocation.latitude, userLocation.longitude,
-                    sprite.position.latitude, sprite.position.longitude,
-                    distance
-                )
-
-                if(distance[0] <= radius) {
-                    saveSpriteToGlossary(sprite)
+            uid?.let {
+                val snapshot = db.reference.child("users").child(uid).child("glossary").get().await()
+                val found = snapshot.children.mapNotNull { it.getValue(String::class.java) }
+                for (sprite in _randomSprites.value) {
+                    if(sprite.name in found) {
+                        continue
+                    } else {
+                        val distance =
+                            FloatArray(1) // para guardar o resultado do calculo da distancia
+                        Location.distanceBetween(
+                            userLocation.latitude, userLocation.longitude,
+                            sprite.position.latitude, sprite.position.longitude,
+                            distance
+                        )
+                        if (distance[0] <= radius) {
+                            saveSpriteToGlossary(sprite)
+                        }
+                    }
                 }
             }
         }

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,29 +41,114 @@ fun GlossaryScreen(
     val champions by viewModel.glossary.collectAsState()
     val squares by viewModel.squares.collectAsState()
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        contentPadding = PaddingValues(8.dp)
-    ) {
-        items(squares){ bitmap ->
-            ChampionItem(bitmap)
+    LaunchedEffect(Unit) {
+        viewModel.getGlossary()
+    }
+
+    Scaffold { innerPadding ->
+        Column(
+            modifier = modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Glossary",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(150.dp)
+                    .padding(16.dp)
+            ) {
+                CircularProgressIndicator(
+                    progress = champions.size / 169f,
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+
+                Text(
+                    text = "${champions.size}/169 found",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Text(
+                text = "Champions Found",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val data = champions.zip(squares)
+                items(data) { (champion, bitmap) ->
+                    println("Champion: ${champion?.name}, Bitmap: $bitmap")
+                    if (champion != null) {
+                        ChampionItem(champion, bitmap)
+                    }
+                }
+            }
         }
     }
+
 }
 
 @Composable
-fun ChampionItem(square: Bitmap) {
+fun ChampionItem(champion: Champion, square: Bitmap) {
     Box(
         modifier = Modifier
-            .size(100.dp)
+            .size(70.dp, 200.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
-            .padding(8.dp),
-        contentAlignment = Alignment.Center
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
     ) {
-        Image(
-            bitmap = square.asImageBitmap(),
-            contentDescription = "Champion Square",
-            modifier = Modifier.padding(16.dp)
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                bitmap = square.asImageBitmap(),
+                contentDescription = "${champion.name} Square",
+                modifier = Modifier.padding(8.dp)
+            )
+
+            Text(
+                text = champion.name
+            )
+
+            Text(
+                text =  "HP: ${champion.stats.hp}",
+                fontSize = 10.sp
+            )
+            Text(
+                text = "MP: ${champion.stats.mp}",
+                fontSize = 10.sp
+            )
+            Text(
+                text = "Attack: ${champion.info.attack}",
+                fontSize = 10.sp
+            )
+            Text(
+                text = "Magic: ${champion.info.magic}",
+                fontSize = 10.sp
+            )
+            Text(
+                text = "Defense: ${champion.info.defense}",
+                fontSize = 10.sp
+            )
+
+        }
     }
 }
