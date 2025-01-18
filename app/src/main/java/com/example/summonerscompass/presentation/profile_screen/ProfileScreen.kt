@@ -12,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -44,33 +47,43 @@ import java.io.ByteArrayOutputStream
 
 private lateinit var db: FirebaseDatabase
 
+/**
+ * ProfileScreen composable that displays user profile information and allows image upload
+ * @param uid User ID for Firebase authentication
+ * @param modifier Modifier for customizing the composable
+ * @param navController Navigation controller for screen navigation
+ */
 @Composable
 fun ProfileScreen(
     uid: String,
     modifier: Modifier = Modifier,
     navController: NavController?
 ) {
+    // Context for Android-specific operations
     val context = LocalContext.current
+
+    // State variables to hold user data
     var name by remember { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf<String?>(null) }
     var profileImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
+    // Initialize Firebase Database with specific instance URL
     db = FirebaseDatabase.getInstance("https://summoners-compass-default-rtdb.europe-west1.firebasedatabase.app")
 
-    // Launcher para abrir a galeria
+    // Activity launcher for gallery image selection
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             val base64Image = encodeImageToBase64(it, context)
             if (base64Image != null) {
-                saveImageToDatabase(uid, base64Image) // Salvar no Realtime Database
-                profileImageBitmap = decodeBase64ToBitmap(base64Image)?.asImageBitmap() // Atualizar a UI
+                saveImageToDatabase(uid, base64Image) // Save image to Firebase
+                profileImageBitmap = decodeBase64ToBitmap(base64Image)?.asImageBitmap() // Update UI
             }
         }
     }
 
-    // Buscar dados do utilizador
+    // Load user data when the screen is first displayed
     LaunchedEffect(Unit) {
         val userData = getUserData(uid)
         name = userData.first
@@ -80,6 +93,7 @@ fun ProfileScreen(
         }
     }
 
+    // Main UI layout
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -88,52 +102,63 @@ fun ProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        // Imagem de perfil com ícone de lápis
+        // Profile image container with edit button
         Box(
             contentAlignment = Alignment.BottomEnd,
             modifier = Modifier
                 .size(120.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-        ) {
-            if (profileImageBitmap != null) {
-                Image(
-                    bitmap = profileImageBitmap!!,
-                    contentDescription = "Foto de Perfil",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.profile),
-                    contentDescription = "Foto de Perfil",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                )
+        ) {  // Removed the clip and background from the Box
+            // First layer: Profile image
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+                if (profileImageBitmap != null) {
+                    Image(
+                        bitmap = profileImageBitmap!!,
+                        contentDescription = "Foto de Perfil",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile),
+                        contentDescription = "Foto de Perfil",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                    )
+                }
             }
 
-            // Ícone para editar a foto
+            // Second layer: Edit icon (will now appear on top)
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Editar Foto de Perfil",
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color.Black,
                 modifier = Modifier
-                    .size(24.dp)
-                    .background(MaterialTheme.colorScheme.secondary, CircleShape)
-                    .padding(4.dp)
+                    .size(32.dp)
+                    .offset(x = 2.dp, y = 2.dp)
+                    .shadow(
+                        elevation = 4.dp,
+                        shape = CircleShape
+                    )
+                    .background(Color.White, CircleShape)
+                    .padding(6.dp)
                     .clickable {
-                        galleryLauncher.launch("image/*") // Abre a galeria ao clicar
+                        galleryLauncher.launch("image/*")
                     }
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Nome do utilizador
+        // Display user's name
         name?.let {
             Text(
                 text = it,
@@ -142,7 +167,7 @@ fun ProfileScreen(
             )
         }
 
-        // E-mail do utilizador
+        // Display user's email
         email?.let {
             Text(
                 text = it,
@@ -150,19 +175,10 @@ fun ProfileScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Botão para abrir a galeria
-        Button(
-            onClick = { galleryLauncher.launch("image/*") },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Selecionar Foto da Galeria")
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botão para logout
+        // Logout button
         Button(
             onClick = { handleLogout(context) },
             modifier = Modifier.fillMaxWidth()
@@ -172,7 +188,12 @@ fun ProfileScreen(
     }
 }
 
-// Função para converter uma imagem para Base64
+/**
+ * Converts an image URI to Base64 string format
+ * @param uri URI of the selected image
+ * @param context Android context for content resolution
+ * @return Base64 encoded string of the image or null if conversion fails
+ */
 fun encodeImageToBase64(uri: Uri, context: Context): String? {
     return try {
         val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
@@ -181,35 +202,47 @@ fun encodeImageToBase64(uri: Uri, context: Context): String? {
         val byteArray = outputStream.toByteArray()
         Base64.encodeToString(byteArray, Base64.DEFAULT)
     } catch (e: Exception) {
-        Log.e("Firebase", "Erro ao converter imagem para Base64", e)
+        Log.e("Firebase", "Erro ao converter a imagem para o formato de Base64", e)
         null
     }
 }
 
-// Função para decodificar uma string Base64 em Bitmap
+/**
+ * Converts a Base64 encoded string back to a Bitmap
+ * @param base64Image Base64 encoded string of the image
+ * @return Bitmap of the decoded image or null if decoding fails
+ */
 fun decodeBase64ToBitmap(base64Image: String): Bitmap? {
     return try {
         val decodedBytes = Base64.decode(base64Image, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
     } catch (e: Exception) {
-        Log.e("Firebase", "Erro ao decodificar imagem Base64", e)
+        Log.e("Firebase", "Erro ao descodificar a imagem para o formato de Base64", e)
         null
     }
 }
 
-// Função para salvar a imagem no Firebase Realtime Database
+/**
+ * Saves the Base64 encoded image to Firebase Realtime Database
+ * @param uid User ID for database reference
+ * @param base64Image Base64 encoded string of the image
+ */
 fun saveImageToDatabase(uid: String, base64Image: String) {
     val userRef = db.getReference("users").child(uid)
     userRef.child("profileImage").setValue(base64Image)
         .addOnSuccessListener {
-            Log.d("Firebase", "Imagem salva com sucesso no Realtime Database")
+            Log.d("Firebase", "Imagem guardada com sucesso no Realtime Database")
         }
         .addOnFailureListener { exception ->
-            Log.e("Firebase", "Erro ao salvar a imagem", exception)
+            Log.e("Firebase", "Erro ao guardar imagem", exception)
         }
 }
 
-// Função para buscar dados do utilizador do Firebase
+/**
+ * Retrieves user data from Firebase Realtime Database
+ * @param uid User ID for database query
+ * @return Triple containing name, email, and profile image (all nullable)
+ */
 suspend fun getUserData(uid: String): Triple<String?, String?, String?> = withContext(Dispatchers.IO) {
     val userRef = db.getReference("users").child(uid)
     try {
@@ -224,7 +257,10 @@ suspend fun getUserData(uid: String): Triple<String?, String?, String?> = withCo
     }
 }
 
-// Função para logout
+/**
+ * Handles user logout by clearing Firebase authentication and navigating to login screen
+ * @param context Android context for starting the login activity
+ */
 fun handleLogout(context: Context) {
     FirebaseAuth.getInstance().signOut()
     val intent = Intent(context, LoginActivity::class.java)
