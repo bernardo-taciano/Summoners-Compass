@@ -1,5 +1,8 @@
 [versions]
 agp = "8.4.1"
+cameraCore = "1.4.1"
+imageLabeling = "17.0.9"
+imageLabelingCommon = "18.1.0"
 kotlin = "1.9.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -13,9 +16,18 @@ navigationCompose = "2.8.4"
 appcompat = "1.7.0"
 firebaseStorageKtx = "21.0.1"
 firebaseDatabase = "21.0.0"
+common = "18.11.0"
+objectDetectionCommon = "18.0.0"
+visionImageLabeling = "17.0.3"
 
 [libraries]
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCore" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraCore" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraCore" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+image-labeling = { module = "com.google.mlkit:image-labeling", version.ref = "imageLabeling" }
+image-labeling-common = { module = "com.google.mlkit:image-labeling-common", version.ref = "imageLabelingCommon" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -34,6 +46,9 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
+common = { group = "com.google.mlkit", name = "common", version.ref = "common" }
+object-detection-common = { group = "com.google.mlkit", name = "object-detection-common", version.ref = "objectDetectionCommon" }
+vision-image-labeling = { module = "com.google.mlkit:vision-image-labeling", version.ref = "visionImageLabeling" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
