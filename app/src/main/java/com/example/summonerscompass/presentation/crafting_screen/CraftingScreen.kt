@@ -22,10 +22,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,13 +38,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.summonerscompass.R
+import com.example.summonerscompass.presentation.crafting_screen.CraftingScreenViewModel
 import com.example.summonerscompass.presentation.glossary_screen.ChampionItem
+import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreenViewModel
 
 @Composable
 fun CraftingScreen(
     modifier: Modifier = Modifier,
-    navController: NavController?
+    navController: NavController?,
+    viewModel: CraftingScreenViewModel
 ) {
+    val items by viewModel.items.collectAsState()
+    val square by viewModel.itemSquare.collectAsState()
+
+    viewModel.getItems()
+
+    val itemMap = items?.data
+    val longSword = itemMap?.get("1036")
+
+
     Scaffold { innerPadding ->
         Column(
             modifier = modifier
@@ -56,6 +72,27 @@ fun CraftingScreen(
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
+
+            if(longSword != null) {
+                Text(text=longSword.name)
+            }
+
+            val res = longSword?.image?.full
+            Button(onClick = {
+                if(res != null) {
+                    viewModel.getItemSquare(res)
+                }
+            }) {
+                Text("Get Long Sword")
+            }
+
+            square?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Item Square",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
     }
 }
