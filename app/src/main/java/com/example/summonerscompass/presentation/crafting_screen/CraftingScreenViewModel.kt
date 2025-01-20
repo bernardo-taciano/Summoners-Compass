@@ -1,5 +1,6 @@
 package com.example.summonerscompass.presentation.crafting_screen
 
+import Item
 import ItemResponse
 import android.Manifest
 import android.content.Context
@@ -18,7 +19,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.example.summonerscompass.network.DataDragonApi
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeler
 import com.google.mlkit.vision.label.ImageLabeling
@@ -40,36 +44,82 @@ class CraftingScreenViewModel(): ViewModel() {
     var cameraProvider: ProcessCameraProvider? = null
     var imageLabeler: ImageLabeler? = null
 
-    private val _items = MutableStateFlow<ItemResponse?>(null)
-    val items: StateFlow<ItemResponse?> = _items
+    private val _inventory = MutableStateFlow<List<Pair<Item?, Int>>>(emptyList())
+    val inventory: StateFlow<List<Pair<Item?, Int>>> = _inventory
 
-    private val _itemSquare = MutableStateFlow<Bitmap?>(null)
-    val itemSquare: StateFlow<Bitmap?> = _itemSquare
+    private val _squares = MutableStateFlow<List<Bitmap>>(emptyList())
+    val squares: StateFlow<List<Bitmap>> = _squares
 
-    fun getItems() {
-        viewModelScope.launch {
-            try {
-                _items.value = DataDragonApi.retrofitService.getItems()
-                println(_items.value)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+    init {
+        getInventory()
+    }
+
+    fun getInventory() {
+        uid?.let { uid ->
+            db.reference.child("users").child(uid).child("inventory")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (!snapshot.exists()) {
+                            println("Empty inventory.")
+                            return
+                        }
+
+                        val inventoryList = snapshot.children.mapNotNull { itemSnapshot ->
+                            val itemId = itemSnapshot.key  //item key
+                            val count = itemSnapshot.child("count").getValue(Int::class.java) // count
+                            if (itemId != null && count != null) {
+                                itemId to count  // pair (item,count)
+                            } else {
+                                null
+                            }
+                        }
+                        getInventoryItems(inventoryList)
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        println("Error accessing Firebase: ${error.message}")
+                    }
+                })
+        } ?: run {
+            println("User not authenticated.")
         }
     }
 
-    fun getItemSquare(res: String) {
+    private fun getInventoryItems(inventory: List<Pair<String, Int>>) {
         viewModelScope.launch {
             try {
-                val responseBody: ResponseBody = DataDragonApi.retrofitService.getItemSquare(res)
+                val itemList = ArrayList<Pair<Item?, Int>>()
+                val squareList = ArrayList<Bitmap>()
+                val itemResponse = DataDragonApi.retrofitService.getItems()
 
-                // convert response into bitmap
-                val inputStream = responseBody.byteStream()
-                val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
+                for ((id, count) in inventory) {
+                    try {
+                        val item = itemResponse.data[id]
 
-                _itemSquare.value = bitmap
+                        if(item != null) {
+                            val pair = Pair(item, count)
+                            itemList.add(pair)
 
+                            val res = item.image.full
+                            val responseBody: ResponseBody =
+                                DataDragonApi.retrofitService.getItemSquare(res)
+
+                            val inputStream = responseBody.byteStream()
+                            val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
+                            squareList.add(bitmap)
+                        } else {
+                            println("Item not found: $id")
+                        }
+                    } catch (e: Exception) {
+                        println("Error getting item $id: ${e.message}")
+                    }
+                }
+
+                _squares.value = squareList
+                _inventory.value = itemList
             } catch (e: Exception) {
                 e.printStackTrace()
+                println("Error retrieving items: ${e.message}")
             }
         }
     }
@@ -82,12 +132,12 @@ class CraftingScreenViewModel(): ViewModel() {
             try {
                 val labels = imageLabeler?.process(inputImage)?.await()
                 labels?.forEach { label ->
-                    if (label.text == "knife") {
-                        onObjectDetected("knife")
-                    } else if (label.text == "fork") {
-                        onObjectDetected("fork")
-                    } else if (label.text == "spoon") {
-                        onObjectDetected("spoon")
+                    if (label.text == "Ring") {
+                        onObjectDetected("Ring")
+                    } else if (label.text == "Cutlery") {
+                        onObjectDetected("Cutlery")
+                    } else if (label.text == "Glasses") {
+                        onObjectDetected("Glasses")
                     }
                 }
             } catch (e: Exception) {
@@ -99,26 +149,22 @@ class CraftingScreenViewModel(): ViewModel() {
     fun addItemToInventory(itemId: String) {
         viewModelScope.launch {
             uid?.let { userId ->
-                val userInventoryRef = db.getReference("users").child(userId).child("inventory")
-
-                userInventoryRef.orderByKey().equalTo(itemId).get()
+                val userInventoryRef = db.getReference("users").child(userId).child("inventory").child(itemId)
+                userInventoryRef.get()
                     .addOnSuccessListener { snapshot ->
                         if (snapshot.exists()) {
-                            snapshot.children.forEach { childSnapshot ->
-                                val currentCount =
-                                    childSnapshot.child("count").getValue(Int::class.java) ?: 0
-                                childSnapshot.ref.child("count").setValue(currentCount + 1)
-                            }
+                            val currentCount = snapshot.child("count").getValue(Int::class.java) ?: 0
+                            userInventoryRef.child("count").setValue(currentCount + 1)
                         } else {
                             val newItem = mapOf(
-                                "itemId" to itemId,
                                 "count" to 1
                             )
-                            userInventoryRef.push().setValue(newItem)
+                            userInventoryRef.setValue(newItem)
                         }
-                    }.addOnFailureListener { e ->
-                    e.printStackTrace()
-                }
+                    }
+                    .addOnFailureListener { e ->
+                        e.printStackTrace()
+                    }
             }
         }
     }

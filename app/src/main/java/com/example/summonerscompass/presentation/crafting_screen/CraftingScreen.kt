@@ -1,5 +1,6 @@
 package com.example.summonerscompass.presentation.profile_screen
 
+import Item
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -24,7 +25,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,6 +72,13 @@ fun CraftingScreen(
     navController: NavController?,
     viewModel: CraftingScreenViewModel
 ) {
+    val inventory by viewModel.inventory.collectAsState()
+    val squares by viewModel.squares.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.getInventory()
+    }
+
     val context = LocalContext.current
     var cameraPermissionGranted by remember { mutableStateOf(false) }
     var isPermissionRequestLaunched by remember { mutableStateOf(false) }
@@ -83,11 +95,10 @@ fun CraftingScreen(
         if (bitmap != null) {
             viewModel.startObjectDetection(bitmap, onObjectDetected = {
                     detectedObject -> when(detectedObject) {
-                "fork" -> viewModel.addItemToInventory(ROD)
-                "knife" -> viewModel.addItemToInventory(BF)
-                "spoon" -> viewModel.addItemToInventory(BELT)
+                "Ring" -> viewModel.addItemToInventory(ROD)
+                "Cutlery" -> viewModel.addItemToInventory(BF)
+                "Glasses" -> viewModel.addItemToInventory(BELT)
             }
-
             })
         }
     }
@@ -106,10 +117,9 @@ fun CraftingScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            // If permission is granted, show the camera button
             if (cameraPermissionGranted) {
                 Button(onClick = { launcher.launch(null) }) {
-                    Text("Take Picture")
+                    Text("Scan Item")
                 }
             } else {
                 // If permission isn't granted, show a request permission button
@@ -125,6 +135,65 @@ fun CraftingScreen(
                     Text("Requesting permission...")
                 }
             }
+
+            Text(
+                text = "Inventory",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(16.dp)
+            )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val data = inventory.zip(squares)
+                items(data) { (pair, bitmap) ->
+                    val item = pair.first
+                    val count = pair.second
+                    println("Item: ${item?.name}, Bitmap: $bitmap")
+                    if (item != null) {
+                        Item(item, count, bitmap)
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun Item(item: Item,count: Int, square: Bitmap) {
+    Box(
+        modifier = Modifier
+            .height(150.dp)
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+            .padding(8.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                bitmap = square.asImageBitmap(),
+                contentDescription = "${item.name} Square",
+                modifier = Modifier
+                    .size(70.dp)
+                    .padding(8.dp)
+            )
+
+            Text(
+                text = item.name,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Count: $count",
+                fontSize = 12.sp
+            )
         }
     }
 }
