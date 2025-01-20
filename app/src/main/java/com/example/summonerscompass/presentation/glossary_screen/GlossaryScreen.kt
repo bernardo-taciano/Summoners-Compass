@@ -110,9 +110,10 @@ fun GlossaryScreen(
 fun ChampionItem(champion: Champion, square: Bitmap) {
     Box(
         modifier = Modifier
-            .size(70.dp, 200.dp)
+            .height(150.dp) // Defina uma altura menor para os itens
+            .fillMaxWidth() // Use o máximo de largura disponível
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
-            .padding(16.dp),
+            .padding(8.dp),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -121,34 +122,38 @@ fun ChampionItem(champion: Champion, square: Bitmap) {
             Image(
                 bitmap = square.asImageBitmap(),
                 contentDescription = "${champion.name} Square",
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier
+                    .size(70.dp)
+                    .padding(8.dp) // Ajuste os tamanhos para caber melhor
             )
 
             Text(
-                text = champion.name
+                text = champion.name,
+                fontSize = 14.sp, // Fonte menor para texto legível
+                fontWeight = FontWeight.Bold
             )
 
             Text(
-                text =  "HP: ${champion.stats.hp}",
-                fontSize = 10.sp
+                text = "HP: ${champion.stats.hp}",
+                fontSize = 12.sp
             )
             Text(
                 text = "MP: ${champion.stats.mp}",
-                fontSize = 10.sp
+                fontSize = 12.sp
             )
             Text(
                 text = "Attack: ${champion.info.attack}",
-                fontSize = 10.sp
+                fontSize = 12.sp
             )
             Text(
                 text = "Magic: ${champion.info.magic}",
-                fontSize = 10.sp
+                fontSize = 12.sp
             )
             Text(
                 text = "Defense: ${champion.info.defense}",
-                fontSize = 10.sp
+                fontSize = 12.sp
             )
-
         }
     }
 }
+

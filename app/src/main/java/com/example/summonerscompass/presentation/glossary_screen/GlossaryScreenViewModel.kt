@@ -1,7 +1,6 @@
 package com.example.summonerscompass.presentation.glossary_screen
 
 import Champion
-import ChampionResponse
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
@@ -17,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 
-class GlossaryScreenViewModel(): ViewModel() {
+class GlossaryScreenViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseDatabase.getInstance("https://summoners-compass-default-rtdb.europe-west1.firebasedatabase.app")
 
@@ -36,20 +35,29 @@ class GlossaryScreenViewModel(): ViewModel() {
     fun getGlossary() {
         uid?.let { uid ->
             db.reference.child("users").child(uid).child("glossary")
-                .addValueEventListener(object : ValueEventListener {
+                .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val glossaryList = snapshot.children.mapNotNull { it.getValue(String::class.java) }
-                        for(champ in glossaryList) {
-                            champ.replace(" ", "")
-                            champ.replace("'", "")
+                        // Verifique se o snapshot contém dados
+                        if (!snapshot.exists()) {
+                            println("Glossary vazio ou não encontrado.")
+                            return
                         }
+
+                        // Obtenha a lista de campeões do glossário e sanitize os nomes
+                        val glossaryList = snapshot.children.mapNotNull { it.getValue(String::class.java) }
+                            .map { it.replace(" ", "").replace("'", "") }
+
+                        // Chame o método para buscar detalhes dos campeões
                         getGlossaryChamps(glossaryList)
                     }
 
                     override fun onCancelled(error: DatabaseError) {
-                        // Handle error
+                        // Log de erro
+                        println("Erro ao acessar o Firebase: ${error.message}")
                     }
                 })
+        } ?: run {
+            println("Usuário não autenticado.")
         }
     }
 
@@ -58,24 +66,36 @@ class GlossaryScreenViewModel(): ViewModel() {
             try {
                 val championList = ArrayList<Champion?>()
                 val squareList = ArrayList<Bitmap>()
-                for(name in glossary) {
-                    val championResponse = DataDragonApi.retrofitService.getChampion(name)
-                    val champion = championResponse.data[name]
-                    championList.add(champion)
-                    if (champion != null) {
-                        val res = champion.image.full
-                        val responseBody: ResponseBody =
-                            DataDragonApi.retrofitService.getChampionSquare(res)
-                        val inputStream = responseBody.byteStream()
-                        val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
 
-                        squareList.add(bitmap)
+                for (name in glossary) {
+                    try {
+                        val championResponse = DataDragonApi.retrofitService.getChampion(name)
+                        val champion = championResponse?.data?.get(name)
+
+                        if (champion != null) {
+                            championList.add(champion)
+
+                            val res = champion.image.full
+                            val responseBody: ResponseBody =
+                                DataDragonApi.retrofitService.getChampionSquare(res)
+
+                            val inputStream = responseBody.byteStream()
+                            val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
+                            squareList.add(bitmap)
+                        } else {
+                            println("Campeão não encontrado: $name")
+                        }
+                    } catch (e: Exception) {
+                        println("Erro ao buscar dados do campeão $name: ${e.message}")
                     }
                 }
+
+                // Atualize os estados com os dados carregados
                 _squares.value = squareList
                 _glossary.value = championList
             } catch (e: Exception) {
                 e.printStackTrace()
+                println("Erro geral ao buscar campeões: ${e.message}")
             }
         }
     }

@@ -133,11 +133,11 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 onMapClick = { latLng ->
                     viewModel.updatePinLocation(latLng) // place pin on map
                 }
-            ){
+            ) {
                 // Add a pin marker if pinLocation is set
                 pinLocation?.let { location ->
                     Marker(
-                        state = MarkerState(position = location) ,
+                        state = MarkerState(position = location),
                         title = "Teleport Here",
                         onClick = {
                             viewModel.updatePinLocation(location)
@@ -146,7 +146,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     )
                 }
 
-                randomSprites.forEach{ sprite ->
+                randomSprites.forEach { sprite ->
                     Circle(
                         center = sprite.position,
                         radius = radius.toDouble(),
@@ -166,9 +166,10 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         }
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Button(onClick = {
             pinLocation?.let {
@@ -182,13 +183,12 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         Button(onClick = {
             pinLocation?.let {
                 viewModel.consumeSprites(it, radius)
-                Toast.makeText(context, "Nearby Sprites Consumed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
             }
         }) {
-            Text("Consume Nearby Sprites")
+            Text("Consume Nearby Spirits")
         }
     }
-
 
 
 }
