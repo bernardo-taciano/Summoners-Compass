@@ -39,6 +39,8 @@ import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreenV
 import com.example.summonerscompass.presentation.home_screen.HomeScreen
 import com.example.summonerscompass.presentation.home_screen.HomeScreenViewModel
 import com.example.summonerscompass.presentation.profile_screen.CraftingScreen
+import com.example.summonerscompass.presentation.profile_screen.FriendsScreen
+import com.example.summonerscompass.presentation.profile_screen.FriendsScreenViewModel
 import com.example.summonerscompass.presentation.profile_screen.ProfileScreen
 import com.example.summonerscompass.routes.Routes
 import com.example.summonerscompass.ui.theme.SummonersCompassTheme
@@ -177,6 +179,10 @@ fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifi
         composable(Routes.glossaryScreen) { GlossaryScreen(navController = navController, viewModel = GlossaryScreenViewModel()) }
         composable(Routes.craftingScreen) { CraftingScreen(navController = navController, viewModel = CraftingScreenViewModel()) }
         composable(Routes.profileScreen) { ProfileScreen(uid, navController = navController) }
+        composable(Routes.friendsScreen) {  backStackEntry ->
+            val uid = backStackEntry.arguments?.getString("uid") ?: return@composable
+            FriendsScreen(uid = uid, navController = navController, viewModel = FriendsScreenViewModel())
+        }
     }
 }
 
