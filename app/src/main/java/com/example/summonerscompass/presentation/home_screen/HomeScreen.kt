@@ -65,7 +65,7 @@ fun HomeScreen(
         ) {
 
             Text(
-                text = "Home Screen",
+                text = "Summoner's Compass",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -104,48 +104,57 @@ fun HomeScreen(
 
 @Composable
 fun MapScreen(viewModel: HomeScreenViewModel) {
-    val atasehir = LatLng(38.7169, -9.1399)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(atasehir, 15f)
-    }
-    val context = LocalContext.current
-    val pinLocation by viewModel.pinLocation.collectAsState()
+    val userLocation by viewModel.userLocation.collectAsState() // Localização do utilizador
+    val pinLocation by viewModel.pinLocation.collectAsState() // Localização do "pin" de TP
     val randomSprites by viewModel.randomSprites.collectAsState()
 
+    // A câmara começa na localização do utilizador, mas não será movida automaticamente depois
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(userLocation, 15f)
+    }
+
+    val context = LocalContext.current
     val radius = 50f
 
-    // Container para a GoogleMap
     Box(
         modifier = Modifier
-            .padding(16.dp), // Espaçamento opcional ao redor do container
-        contentAlignment = Alignment.TopCenter // Centraliza o mapa no container
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
     ) {
         Box(
             modifier = Modifier
-                .width(350.dp) // Defina a largura desejada
-                .height(200.dp) // Defina a altura desejada
-                .clip(RoundedCornerShape(16.dp)) // Bordas arredondadas opcionais
-                .border(1.dp, Color.Gray) // Borda opcional
+                .width(350.dp)
+                .height(200.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .border(1.dp, Color.Gray)
         ) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 onMapClick = { latLng ->
-                    viewModel.updatePinLocation(latLng) // place pin on map
+                    viewModel.updatePinLocation(latLng) // Atualiza apenas o pin de TP
                 }
             ) {
-                // Add a pin marker if pinLocation is set
+                // Marcador da localização atual do utilizador
+                Marker(
+                    state = MarkerState(position = userLocation),
+                    title = "Your Location",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE) // Pin azul
+                )
+
+                // Marcador para o pin de TP
                 pinLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
                         title = "Teleport Here",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), // Pin vermelho
                         onClick = {
-                            viewModel.updatePinLocation(location)
-                            true
+                            true // Impede ações adicionais ao clicar no marcador
                         }
                     )
                 }
 
+                // Adiciona círculos e marcadores para os sprites
                 randomSprites.forEach { sprite ->
                     Circle(
                         center = sprite.position,
@@ -161,7 +170,6 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                         icon = BitmapDescriptorFactory.fromBitmap(sprite.image)
                     )
                 }
-
             }
         }
     }
@@ -173,7 +181,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
     ) {
         Button(onClick = {
             pinLocation?.let {
-                viewModel.teleportTo(it)
+                viewModel.teleportTo(it) // Teleporta o utilizador para o pin
                 Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
             }
         }) {
@@ -182,13 +190,11 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
 
         Button(onClick = {
             pinLocation?.let {
-                viewModel.consumeSprites(it, radius)
+                viewModel.consumeSprites(it, radius) // Consome os sprites próximos ao pin
                 Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
             }
         }) {
             Text("Consume Nearby Spirits")
         }
     }
-
-
 }
