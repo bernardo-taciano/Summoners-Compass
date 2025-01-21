@@ -18,7 +18,8 @@ import okhttp3.ResponseBody
 
 class GlossaryScreenViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseDatabase.getInstance("https://summoners-compass-default-rtdb.europe-west1.firebasedatabase.app")
+    private val db =
+        FirebaseDatabase.getInstance("https://summoners-compass-default-rtdb.europe-west1.firebasedatabase.app")
 
     private val uid = auth.uid
 
@@ -28,32 +29,39 @@ class GlossaryScreenViewModel : ViewModel() {
     private val _squares = MutableStateFlow<List<Bitmap>>(emptyList())
     val squares: StateFlow<List<Bitmap>> = _squares
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     init {
         getGlossary()
     }
 
     fun getGlossary() {
+        // Se o glossário já tiver dados, não recarregar
+        if (_glossary.value.isNotEmpty()) return
+
+        _isLoading.value = true
+
         uid?.let { uid ->
             db.reference.child("users").child(uid).child("glossary")
                 .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        // Verifique se o snapshot contém dados
                         if (!snapshot.exists()) {
                             println("Glossary vazio ou não encontrado.")
+                            _isLoading.value = false
                             return
                         }
+                        val glossaryList =
+                            snapshot.children.mapNotNull { it.getValue(String::class.java) }
+                                .map { it.replace(" ", "").replace("'", "") }
 
-                        // Obtenha a lista de campeões do glossário e sanitize os nomes
-                        val glossaryList = snapshot.children.mapNotNull { it.getValue(String::class.java) }
-                            .map { it.replace(" ", "").replace("'", "") }
-
-                        // Chame o método para buscar detalhes dos campeões
                         getGlossaryChamps(glossaryList)
                     }
 
                     override fun onCancelled(error: DatabaseError) {
                         // Log de erro
                         println("Erro ao acessar o Firebase: ${error.message}")
+                        _isLoading.value = false
                     }
                 })
         } ?: run {
@@ -95,6 +103,8 @@ class GlossaryScreenViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 println("Erro geral ao buscar campeões: ${e.message}")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
