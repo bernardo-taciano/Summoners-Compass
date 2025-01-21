@@ -5,34 +5,45 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GlossaryScreen(
     modifier: Modifier = Modifier,
@@ -41,115 +52,162 @@ fun GlossaryScreen(
 ) {
     val champions by viewModel.glossary.collectAsState()
     val squares by viewModel.squares.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.getGlossary()
     }
 
     Scaffold { innerPadding ->
-        Column(
-            modifier = modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Glossary",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
+        if (isLoading) {
             Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(150.dp)
-                    .padding(16.dp)
-            ) {
-                CircularProgressIndicator(
-                    progress = champions.size / 169f,
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-
-                Text(
-                    text = "${champions.size}/169 \n Champions found",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(16.dp),
                 modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentAlignment = Alignment.Center
             ) {
-                val data = champions.zip(squares)
-                items(data) { (champion, bitmap) ->
-                    println("Champion: ${champion?.name}, Bitmap: $bitmap")
-                    if (champion != null) {
-                        ChampionItem(champion, bitmap)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
+            Column(
+                modifier = modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Glossary",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .padding(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        progress = champions.size / 169f,
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Text(
+                        text = "${champions.size}/169 \n Champions found",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1),
+                    contentPadding = PaddingValues(16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val data = champions.zip(squares)
+                    items(data) { (champion, bitmap) ->
+                        if (champion != null) {
+                            ChampionItem(champion, bitmap)
+                        }
                     }
                 }
             }
         }
     }
-
 }
+
 
 @Composable
 fun ChampionItem(champion: Champion, square: Bitmap) {
-    Box(
+    Card(
         modifier = Modifier
-            .height(150.dp) // Defina uma altura menor para os itens
-            .fillMaxWidth() // Use o máximo de largura disponível
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+            .fillMaxWidth()
+            .height(120.dp)
             .padding(8.dp),
-        contentAlignment = Alignment.TopCenter
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 bitmap = square.asImageBitmap(),
-                contentDescription = "${champion.name} Square",
+                contentDescription = "${champion.name} Image",
                 modifier = Modifier
-                    .size(70.dp)
-                    .padding(8.dp) // Ajuste os tamanhos para caber melhor
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
             )
-
-            Text(
-                text = champion.name,
-                fontSize = 14.sp, // Fonte menor para texto legível
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "HP: ${champion.stats.hp}",
-                fontSize = 12.sp
-            )
-            Text(
-                text = "MP: ${champion.stats.mp}",
-                fontSize = 12.sp
-            )
-            Text(
-                text = "Attack: ${champion.info.attack}",
-                fontSize = 12.sp
-            )
-            Text(
-                text = "Magic: ${champion.info.magic}",
-                fontSize = 12.sp
-            )
-            Text(
-                text = "Defense: ${champion.info.defense}",
-                fontSize = 12.sp
-            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = champion.name,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = MaterialTheme.typography.bodyMedium.toSpanStyle()
+                                    .copy(fontWeight = FontWeight.Bold)
+                            ) {
+                                append("HP: ")
+                            }
+                            withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                append("${champion.stats.hp}")
+                            }
+                        },
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = MaterialTheme.typography.bodyMedium.toSpanStyle()
+                                    .copy(fontWeight = FontWeight.Bold)
+                            ) {
+                                append("MP: ")
+                            }
+                            withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                append("${champion.stats.mp}")
+                            }
+                        },
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = MaterialTheme.typography.bodyMedium.toSpanStyle()
+                                    .copy(fontWeight = FontWeight.Bold)
+                            ) {
+                                append("Attack: ")
+                            }
+                            withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                append("${champion.info.attack}")
+                            }
+                        },
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
     }
 }
-
