@@ -182,7 +182,7 @@ fun ProfileScreen(
             onClick = { navController?.navigate("friends_screen/$uid") },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Friends")
+            Text(text = "Social")
         }
 
         // Logout button
