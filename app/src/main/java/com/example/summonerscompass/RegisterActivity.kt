@@ -79,6 +79,7 @@ class RegisterActivity : ComponentActivity() {
         val userMap = mapOf(
             "name" to name,
             "email" to email,
+            "power" to 0
         )
 
         db.reference.child("users").child(uid).setValue(userMap)
@@ -91,6 +92,7 @@ class RegisterActivity : ComponentActivity() {
                 }
             }
     }
+
 }
 
 @Composable

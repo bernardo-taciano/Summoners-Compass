@@ -1,6 +1,8 @@
 package com.example.summonerscompass.presentation.home_screen
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,7 +10,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -48,6 +52,17 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeScreenViewModel
 ) {
+    // Observar o valor de userPower do ViewModel
+    val userPower by viewModel.userPower.collectAsState()
+
+    // Obter o contexto
+    val context = LocalContext.current
+
+    // Chamar fetchUserPower quando a tela for carregada
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserPower()
+    }
+
     Scaffold { innerPadding ->
         Column(
             modifier = modifier
@@ -57,12 +72,14 @@ fun HomeScreen(
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Título
             Text(
                 text = "Summoner's Compass",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
 
+            // Exibir logo
             Image(
                 painter = painterResource(id = R.drawable.summoners_logo),
                 contentDescription = "Summoner's Logo",
@@ -70,11 +87,129 @@ fun HomeScreen(
                     .width(100.dp)
                     .height(100.dp)
             )
-
+            PowerLevelBar(
+                power = userPower,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
             MapScreen(viewModel)
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Button(
+                    onClick = {
+                        viewModel.updatePinLocation(viewModel.userLocation.value)
+                        Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(8.dp)
+                ) {
+                    Text("Teleport to Pin Location")
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.consumeSprites(viewModel.userLocation.value, 50f)
+                        Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(8.dp)
+                ) {
+                    Text("Consume Nearby Spirits")
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.consumeEnergyPools(viewModel.userLocation.value, 50f)
+                        Toast.makeText(context, "Nearby Energy Pools Consumed", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(8.dp)
+                ) {
+                    Text("Consume Nearby Energy Pools")
+                }
+            }
         }
     }
 }
+
+
+
+@SuppressLint("StateFlowValueCalledInComposition")
+@Composable
+fun PowerLevelBar(
+    power: Int,
+    modifier: Modifier = Modifier
+) {
+    // Calcular nível e progresso com base no valor de power
+    val (level, progress) = calculateLevelAndProgress(power)
+
+    // Log para depuração
+    println("PowerLevelBar -> Power: $power, Level: $level, Progress: $progress")
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(16.dp)
+    ) {
+        // Exibir o nível atual
+        Text(
+            text = "Level $level",
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        // Barra de Progresso
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(30.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.Gray)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress.coerceIn(0f, 1f)) // Certifica-se de que o progresso está entre 0 e 1
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Green)
+            )
+        }
+
+        // Exibir o valor atual de power
+        Text(
+            text = "Power: $power",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+
+
+// Função de cálculo do nível e progresso (se ainda não estava no arquivo correto)
+fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
+    var level = 1
+    var powerForCurrentLevel = 100
+    var totalPowerForNextLevel = powerForCurrentLevel
+
+    while (power >= totalPowerForNextLevel) {
+        level++
+        powerForCurrentLevel = totalPowerForNextLevel
+        totalPowerForNextLevel += 100 * level
+    }
+
+    val progress = (power - powerForCurrentLevel).toFloat() / (totalPowerForNextLevel - powerForCurrentLevel)
+    return Pair(level, progress.coerceIn(0f, 1f)) // Garante que o progresso está entre 0 e 1
+}
+
+
+
 
 
 @Composable
@@ -82,6 +217,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
     val userLocation by viewModel.userLocation.collectAsState()
     val pinLocation by viewModel.pinLocation.collectAsState()
     val randomSprites by viewModel.randomSprites.collectAsState()
+    val energyPools by viewModel.energyPools.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 15f)
@@ -90,14 +226,15 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
     val context = LocalContext.current
     val radius = 50f
 
-    Box(
+    Column(
         modifier = Modifier
+            .fillMaxSize()
             .padding(16.dp),
-        contentAlignment = Alignment.TopCenter
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .width(350.dp)
+                .fillMaxWidth()
                 .height(200.dp)
                 .clip(RoundedCornerShape(3.dp))
                 .border(1.dp, Color.Gray)
@@ -109,12 +246,14 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     viewModel.updatePinLocation(latLng)
                 }
             ) {
+                // Marcador do jogador
                 Marker(
                     state = MarkerState(position = userLocation),
                     title = "Your Location",
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                 )
 
+                // Marcador do pin para teletransporte
                 pinLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
@@ -126,6 +265,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     )
                 }
 
+                // Exibe sprites aleatórios no mapa
                 randomSprites.forEach { sprite ->
                     Circle(
                         center = sprite.position,
@@ -141,15 +281,29 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                         icon = BitmapDescriptorFactory.fromBitmap(sprite.image)
                     )
                 }
+
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.be_icon)
+                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, false) // Ajuste o tamanho
+                val icon = BitmapDescriptorFactory.fromBitmap(scaledBitmap)
+
+                energyPools.forEach { pool ->
+                    Circle(
+                        center = pool.position,
+                        radius = radius.toDouble(),
+                        fillColor = Color(0x330000FF), // Azul com transparência
+                        strokeColor = Color.Blue, // Azul mais forte na borda
+                        strokeWidth = 2f
+                    )
+
+                    Marker(
+                        state = MarkerState(position = LatLng(pool.position.latitude - 0.0003, pool.position.longitude)), // Deslocar ícone para baixo
+                        title = "Energy Pool (+${pool.powerValue} Power)",
+                        icon = icon
+                    )
+                }
             }
         }
-    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
         Button(onClick = {
             pinLocation?.let {
                 viewModel.teleportTo(it)
@@ -162,10 +316,20 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         Button(onClick = {
             pinLocation?.let {
                 viewModel.consumeSprites(it, radius)
+                viewModel.consumeEnergyPools(it, radius)
                 Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
             }
         }) {
             Text("Consume Nearby Spirits")
+        }
+
+        Button(onClick = {
+            pinLocation?.let {
+                viewModel.consumeEnergyPools(it, radius)
+                Toast.makeText(context, "Nearby Energy Pools Consumed", Toast.LENGTH_SHORT).show()
+            }
+        }) {
+            Text("Consume Nearby Energy Pools")
         }
     }
 }
