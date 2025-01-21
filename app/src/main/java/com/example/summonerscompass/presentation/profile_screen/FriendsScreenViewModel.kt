@@ -1,10 +1,8 @@
 package com.example.summonerscompass.presentation.profile_screen
 
 import android.util.Log
-import androidx.compose.animation.core.snap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.summonerscompass.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -94,7 +92,15 @@ class FriendsScreenViewModel() : ViewModel() {
                     if (snapshot.exists()) {
                         for (userSnapshot in snapshot.children) {
                             val rid = userSnapshot.key
-                            if (rid != null && uid != null) {
+                            var areFriends = false
+
+                            for (user in _friends.value){
+                                if (user.email == email) {
+                                    areFriends = true
+                                }
+                            }
+
+                            if (rid != null && uid != null && !areFriends) {
                                 db.reference.child("friend_requests").child(rid).child(uid).setValue(true)
                             }
                         }
