@@ -33,6 +33,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 
+private const val BF = "1038"
+private const val ROD = "1058"
+private const val BELT = "1011"
+private const val GUNBLADE = "223146"
+private const val STERAKS = "223053"
+private const val RYLAIS = "223116"
+private const val WARMOG = "3083"
+private const val DCAP = "223089"
+private const val DBLADE = "228003"
 
 class CraftingScreenViewModel(): ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -50,6 +59,12 @@ class CraftingScreenViewModel(): ViewModel() {
     private val _squares = MutableStateFlow<List<Bitmap>>(emptyList())
     val squares: StateFlow<List<Bitmap>> = _squares
 
+    private val itemCombinations = mapOf(
+        BF to mapOf(BF to DBLADE, ROD to GUNBLADE, BELT to STERAKS),
+        ROD to mapOf(ROD to DCAP, BELT to RYLAIS),
+        BELT to mapOf(BELT to WARMOG)
+    )
+
     init {
         getInventory()
     }
@@ -57,7 +72,7 @@ class CraftingScreenViewModel(): ViewModel() {
     fun getInventory() {
         uid?.let { uid ->
             db.reference.child("users").child(uid).child("inventory")
-                .addListenerForSingleValueEvent(object : ValueEventListener {
+                .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         if (!snapshot.exists()) {
                             println("Empty inventory.")
@@ -166,6 +181,72 @@ class CraftingScreenViewModel(): ViewModel() {
                         e.printStackTrace()
                     }
             }
+        }
+    }
+
+    fun combineItems(item1: String, item2: String) {
+        uid?.let { uid ->
+            val userInventoryRef = db.reference.child("users").child(uid).child("inventory")
+
+            userInventoryRef.get().addOnSuccessListener { snapshot ->
+                if (!snapshot.exists()) {
+                    println("Empty inventory.")
+                    return@addOnSuccessListener
+                }
+
+                val inventoryMap = snapshot.children.associate {
+                    ((it.key to it.child("count").getValue(Int::class.java))
+                        ?: 0) as Pair<String, Int>
+                }
+
+                // Check if both items are in inventory
+                if (inventoryMap[item1] == null || inventoryMap[item1]!! <= 0 ||
+                    inventoryMap[item2] == null || inventoryMap[item2]!! <= 0 ||
+                    (item1 == item2 && inventoryMap[item1]!! < 2)
+                ) {
+                    println("One or both items are not available in the inventory.")
+                    return@addOnSuccessListener
+                }
+
+                // Get the combined item
+                val combinedItem = itemCombinations[item1]?.get(item2) ?: itemCombinations[item2]?.get(item1)
+                if (combinedItem == null) {
+                    println("These items cannot be combined.")
+                    return@addOnSuccessListener
+                }
+
+                // Update inventory: Remove the two items
+                val updates = mutableMapOf<String, Any?>()
+                if (item1 == item2){
+                    if (inventoryMap[item1] == 2) updates["$item1/count"] =
+                        null else updates["$item1/count"] = inventoryMap[item1]!! - 2
+                } else {
+                    if (inventoryMap[item1] == 1) updates["$item1/count"] =
+                        null else updates["$item1/count"] = inventoryMap[item1]!! - 1
+                    if (inventoryMap[item2] == 1) updates["$item2/count"] =
+                        null else updates["$item2/count"] = inventoryMap[item2]!! - 1
+                }
+
+                // Add the combined item
+                if (inventoryMap[combinedItem] == null) {
+                    updates["$combinedItem/count"] = 1
+                } else {
+                    updates["$combinedItem/count"] = inventoryMap[combinedItem]!! + 1
+                }
+
+                // Apply updates to the database
+                userInventoryRef.updateChildren(updates)
+                    .addOnSuccessListener {
+                        println("Successfully combined $item1 and $item2 into $combinedItem.")
+                    }
+                    .addOnFailureListener { e ->
+                        println("Failed to update inventory: ${e.message}")
+                    }
+            }.addOnFailureListener { e ->
+                println("Error accessing inventory: ${e.message}")
+            }
+        } ?: run {
+            println("User not authenticated.")
         }
     }
 }

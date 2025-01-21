@@ -13,6 +13,8 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,32 +41,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.example.summonerscompass.presentation.crafting_screen.CraftingScreenViewModel
-import com.example.summonerscompass.presentation.glossary_screen.ChampionItem
-import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreenViewModel
 
 private const val BF = "1038"
 private const val ROD = "1058"
 private const val BELT = "1011"
+
+
 
 @Composable
 fun CraftingScreen(
@@ -74,6 +69,7 @@ fun CraftingScreen(
 ) {
     val inventory by viewModel.inventory.collectAsState()
     val squares by viewModel.squares.collectAsState()
+    val selectedItems = remember { mutableStateListOf<String>() }
 
     LaunchedEffect(Unit) {
         viewModel.getInventory()
@@ -111,6 +107,11 @@ fun CraftingScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if(!isPermissionRequestLaunched) {
+                isPermissionRequestLaunched = true
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+
             Text(
                 text = "Crafting System",
                 style = MaterialTheme.typography.headlineSmall,
@@ -121,19 +122,6 @@ fun CraftingScreen(
                 Button(onClick = { launcher.launch(null) }) {
                     Text("Scan Item")
                 }
-            } else {
-                // If permission isn't granted, show a request permission button
-                if (!isPermissionRequestLaunched) {
-                    Button(onClick = {
-                        isPermissionRequestLaunched = true
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }) {
-                        Text("Request Camera Permission")
-                    }
-                } else {
-                    // Show a message while waiting for permission response
-                    Text("Requesting permission...")
-                }
             }
 
             Text(
@@ -141,6 +129,23 @@ fun CraftingScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(16.dp)
             )
+
+
+            Button(
+                onClick = {
+                    if (selectedItems.size == 2) {
+                        val selected = selectedItems.toList()
+                        viewModel.combineItems(selected[0], selected[1])
+                        selectedItems.clear()
+                    } else {
+                        Toast.makeText(context, "Invalid selection", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text("Combine Items")
+            }
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(16.dp),
@@ -152,13 +157,53 @@ fun CraftingScreen(
                 items(data) { (pair, bitmap) ->
                     val item = pair.first
                     val count = pair.second
-                    println("Item: ${item?.name}, Bitmap: $bitmap")
+
                     if (item != null) {
-                        Item(item, count, bitmap)
+                        val itemId = item.image.full.dropLast(4)
+                        Box(
+                            modifier = Modifier
+                                .height(150.dp)
+                                .fillMaxWidth()
+                                .background(
+                                    if (selectedItems.contains(itemId)) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(8.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null // remove o quadrado cinza
+                                ) {
+                                    if (selectedItems.count { it == itemId } < count && selectedItems.size < 2) {
+                                        selectedItems.add(itemId)
+                                    } else if (selectedItems.contains(itemId)) {
+                                        selectedItems.remove(itemId)
+                                    }
+                                },
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "${item.name} Square",
+                                    modifier = Modifier
+                                        .size(70.dp)
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = item.name,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Count: $count",
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
                     }
                 }
             }
-
         }
     }
 }
