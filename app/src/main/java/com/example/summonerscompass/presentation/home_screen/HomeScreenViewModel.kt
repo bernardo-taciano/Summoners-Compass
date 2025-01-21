@@ -184,7 +184,6 @@ class HomeScreenViewModel() : ViewModel() {
 
     fun updatePinLocation(newLocation: LatLng) {
         _pinLocation.value = newLocation
-        _userLocation.value = newLocation // Update user location for teleportation
     }
 
     fun teleportTo(newLocation: LatLng) {

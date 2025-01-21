@@ -314,7 +314,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         }
 
         Button(onClick = {
-            pinLocation?.let {
+            userLocation.let {
                 viewModel.consumeSprites(it, radius)
                 viewModel.consumeEnergyPools(it, radius)
                 Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
@@ -324,7 +324,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         }
 
         Button(onClick = {
-            pinLocation?.let {
+            userLocation.let {
                 viewModel.consumeEnergyPools(it, radius)
                 Toast.makeText(context, "Nearby Energy Pools Consumed", Toast.LENGTH_SHORT).show()
             }
