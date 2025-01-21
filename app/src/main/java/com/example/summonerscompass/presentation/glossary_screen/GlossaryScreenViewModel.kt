@@ -90,7 +90,6 @@ class GlossaryScreenViewModel : ViewModel() {
                     }
                 }
 
-                // Atualize os estados com os dados carregados
                 _squares.value = squareList
                 _glossary.value = championList
             } catch (e: Exception) {
