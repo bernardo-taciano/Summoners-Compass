@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -109,8 +110,8 @@ fun MainScreen(modifier: Modifier = Modifier, uid: String) {
         BottomNavigationItem(
             route = Routes.craftingScreen,
             title = "Crafting",
-            selectedIcon = Icons.Filled.Add,
-            unselectedIcon = Icons.Outlined.Add,
+            selectedIcon = Icons.Filled.Build,
+            unselectedIcon = Icons.Filled.Build,
         ),
         BottomNavigationItem(
             route = Routes.profileScreen,

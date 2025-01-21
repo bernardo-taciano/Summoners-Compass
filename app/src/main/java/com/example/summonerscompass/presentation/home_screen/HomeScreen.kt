@@ -27,9 +27,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.summonerscompass.R
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -46,14 +48,6 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeScreenViewModel
 ) {
-    val champions by viewModel.champions.collectAsState()
-    val square by viewModel.championSquare.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.getChampions()
-    }
-
-
     Scaffold { innerPadding ->
         Column(
             modifier = modifier
@@ -63,52 +57,32 @@ fun HomeScreen(
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "Summoner's Compass",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            val championMap = champions?.data
-            val name = championMap?.get("Gragas")?.name
-            if (name != null) {
-                Text(text = name)
-            }
-
-            val res = championMap?.get("Gragas")?.image?.full
-            Button(onClick = {
-                if (res != null) {
-                    viewModel.getChampionSquare(res)
-                }
-            }) {
-                Text("Get Gragas Square")
-            }
-
-            square?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "Champion Square",
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.summoners_logo),
+                contentDescription = "Summoner's Logo",
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(100.dp)
+            )
 
             MapScreen(viewModel)
-
-
         }
     }
-
 }
 
 
 @Composable
 fun MapScreen(viewModel: HomeScreenViewModel) {
-    val userLocation by viewModel.userLocation.collectAsState() // Localização do utilizador
-    val pinLocation by viewModel.pinLocation.collectAsState() // Localização do "pin" de TP
+    val userLocation by viewModel.userLocation.collectAsState()
+    val pinLocation by viewModel.pinLocation.collectAsState()
     val randomSprites by viewModel.randomSprites.collectAsState()
 
-    // A câmara começa na localização do utilizador, mas não será movida automaticamente depois
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 15f)
     }
@@ -125,36 +99,33 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
             modifier = Modifier
                 .width(350.dp)
                 .height(200.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(3.dp))
                 .border(1.dp, Color.Gray)
         ) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 onMapClick = { latLng ->
-                    viewModel.updatePinLocation(latLng) // Atualiza apenas o pin de TP
+                    viewModel.updatePinLocation(latLng)
                 }
             ) {
-                // Marcador da localização atual do utilizador
                 Marker(
                     state = MarkerState(position = userLocation),
                     title = "Your Location",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE) // Pin azul
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                 )
 
-                // Marcador para o pin de TP
                 pinLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
                         title = "Teleport Here",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), // Pin vermelho
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
                         onClick = {
-                            true // Impede ações adicionais ao clicar no marcador
+                            true
                         }
                     )
                 }
 
-                // Adiciona círculos e marcadores para os sprites
                 randomSprites.forEach { sprite ->
                     Circle(
                         center = sprite.position,
@@ -181,7 +152,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
     ) {
         Button(onClick = {
             pinLocation?.let {
-                viewModel.teleportTo(it) // Teleporta o utilizador para o pin
+                viewModel.teleportTo(it)
                 Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
             }
         }) {
@@ -190,7 +161,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
 
         Button(onClick = {
             pinLocation?.let {
-                viewModel.consumeSprites(it, radius) // Consome os sprites próximos ao pin
+                viewModel.consumeSprites(it, radius)
                 Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
             }
         }) {
