@@ -190,11 +190,10 @@ fun CustomProgressBar(level: Int, progress: Float, power: Int, modifier: Modifie
 }
 
 
-// Função de cálculo do nível e progresso (se ainda não estava no arquivo correto)
 fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
     var level = 1
-    var powerForCurrentLevel = 100
-    var totalPowerForNextLevel = powerForCurrentLevel
+    var powerForCurrentLevel = 0 // Alterado para começar do nível zero
+    var totalPowerForNextLevel = 100 // Primeiro nível termina com 100
 
     while (power >= totalPowerForNextLevel) {
         level++
@@ -202,10 +201,15 @@ fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
         totalPowerForNextLevel += 100 * level
     }
 
-    val progress =
+    val progress = if (totalPowerForNextLevel > powerForCurrentLevel) {
         (power - powerForCurrentLevel).toFloat() / (totalPowerForNextLevel - powerForCurrentLevel)
+    } else {
+        0f
+    }
+
     return Pair(level, progress.coerceIn(0f, 1f)) // Garante que o progresso está entre 0 e 1
 }
+
 
 
 @Composable
