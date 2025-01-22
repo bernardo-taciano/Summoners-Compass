@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ fun GlossaryScreen(
     val champions by viewModel.glossary.collectAsState()
     val squares by viewModel.squares.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.getGlossary()
@@ -80,6 +82,18 @@ fun GlossaryScreen(
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onBackground
                 )
+                if(champions.size > 1) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { query ->
+                            viewModel.updateSearchQuery(query)
+                        },
+                        label = { Text("Search Champion") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier

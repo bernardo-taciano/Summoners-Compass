@@ -32,13 +32,22 @@ class GlossaryScreenViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val originalGlossary = mutableListOf<Champion?>() // Backup da lista completa
+    private val originalSquares = mutableListOf<Bitmap>()
+
     init {
         getGlossary()
     }
 
     fun getGlossary() {
-        // Se o glossário já tiver dados, não recarregar
-        if (_glossary.value.isNotEmpty()) return
+        if (_glossary.value.isNotEmpty()) {
+            _glossary.value = originalGlossary
+            _squares.value = originalSquares
+            return
+        }
 
         _isLoading.value = true
 
@@ -98,14 +107,39 @@ class GlossaryScreenViewModel : ViewModel() {
                     }
                 }
 
-                _squares.value = squareList
+                originalGlossary.clear()
+                originalGlossary.addAll(championList)
+
+                originalSquares.clear()
+                originalSquares.addAll(squareList)
+
                 _glossary.value = championList
+                _squares.value = squareList
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 println("Erro geral ao buscar campeões: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+
+        if (query.isEmpty()) {
+            _glossary.value = originalGlossary
+            _squares.value = originalSquares
+        } else {
+            val filteredChampions = originalGlossary.filter { it?.name?.contains(query, ignoreCase = true) == true }
+            val filteredSquares = filteredChampions.mapNotNull { champion ->
+                val index = originalGlossary.indexOf(champion)
+                if (index != -1) originalSquares.getOrNull(index) else null
+            }
+
+            _glossary.value = filteredChampions
+            _squares.value = filteredSquares
         }
     }
 }
