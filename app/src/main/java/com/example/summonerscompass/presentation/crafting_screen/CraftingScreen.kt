@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.summonerscompass.presentation.crafting_screen.CraftingScreenViewModel
-import com.example.summonerscompass.routes.Routes
 
 private const val BF = "1038"
 private const val ROD = "1058"
@@ -123,10 +122,6 @@ fun CraftingScreen(
                 Button(onClick = { launcher.launch(null) }) {
                     Text("Scan Item")
                 }
-            }
-
-            Button(onClick = { navController?.navigate(Routes.tradingScreen) }) {
-                Text("Trade")
             }
 
             Text(
