@@ -124,6 +124,10 @@ fun CraftingScreen(
                 }
             }
 
+            Button(onClick = {  }) {
+                Text("Trade")
+            }
+
             Text(
                 text = "Inventory",
                 style = MaterialTheme.typography.headlineSmall,
