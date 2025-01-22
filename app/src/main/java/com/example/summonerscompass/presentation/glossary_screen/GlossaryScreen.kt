@@ -22,10 +22,18 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SportsKabaddi
+import androidx.compose.material.icons.filled.SportsMartialArts
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -38,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -136,7 +145,7 @@ fun ChampionItem(champion: Champion, square: Bitmap) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(150.dp)
             .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -203,23 +212,58 @@ fun ChampionItem(champion: Champion, square: Bitmap) {
                         },
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(
-                                style = MaterialTheme.typography.bodyMedium.toSpanStyle()
-                                    .copy(fontWeight = FontWeight.Bold)
-                            ) {
-                                append("Attack: ")
-                            }
-                            withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                append("${champion.info.attack}")
-                            }
-                        },
-                        color = MaterialTheme.colorScheme.onSurface
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatWithIcon(
+                        icon = Icons.Default.SportsMartialArts,
+                        label = "Attack",
+                        value = champion.info.attack
+                    )
+                    StatWithIcon(
+                        icon = Icons.Default.AutoFixHigh,
+                        label = "Magic",
+                        value = champion.info.magic
+                    )
+                    StatWithIcon(
+                        icon = Icons.Default.Shield,
+                        label = "Defense",
+                        value = champion.info.defense
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun StatWithIcon(icon: ImageVector, label: String, value: Int) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = buildAnnotatedString {
+                withStyle(
+                    style = MaterialTheme.typography.bodyMedium.toSpanStyle()
+                        .copy(fontWeight = FontWeight.Bold)
+                ) {
+                    append("$value")
+                }
+            },
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
