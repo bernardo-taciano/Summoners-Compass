@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,93 +53,50 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeScreenViewModel
 ) {
-    // Observar o valor de userPower do ViewModel
     val userPower by viewModel.userPower.collectAsState()
 
-    // Obter o contexto
     val context = LocalContext.current
 
-    // Chamar fetchUserPower quando a tela for carregada
     LaunchedEffect(Unit) {
         viewModel.fetchUserPower()
     }
 
     Scaffold { innerPadding ->
-        Column(
-            modifier = modifier
+        Box(
+            modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Título
-            Text(
-                text = "Summoner's Compass",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            // Exibir logo
-            Image(
-                painter = painterResource(id = R.drawable.summoners_logo),
-                contentDescription = "Summoner's Logo",
+            Column(
                 modifier = Modifier
-                    .width(100.dp)
-                    .height(100.dp)
-            )
+                    .fillMaxSize()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+
+                Text(
+                    text = "Summoner's Compass",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                MapScreen(viewModel)
+
+            }
+
+            // Barra de Power na parte inferior
             PowerLevelBar(
                 power = userPower,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .align(Alignment.BottomCenter) // Fixa na parte inferior
                     .padding(16.dp)
             )
-            MapScreen(viewModel)
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Button(
-                    onClick = {
-                        viewModel.updatePinLocation(viewModel.userLocation.value)
-                        Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(8.dp)
-                ) {
-                    Text("Teleport to Pin Location")
-                }
-
-                Button(
-                    onClick = {
-                        viewModel.consumeSprites(viewModel.userLocation.value, 50f)
-                        Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(8.dp)
-                ) {
-                    Text("Consume Nearby Spirits")
-                }
-
-                Button(
-                    onClick = {
-                        viewModel.consumeEnergyPools(viewModel.userLocation.value, 50f)
-                        Toast.makeText(context, "Nearby Energy Pools Consumed", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(8.dp)
-                ) {
-                    Text("Consume Nearby Energy Pools")
-                }
-            }
         }
     }
 }
-
 
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -174,7 +132,12 @@ fun PowerLevelBar(
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(progress.coerceIn(0f, 1f)) // Certifica-se de que o progresso está entre 0 e 1
+                    .fillMaxWidth(
+                        progress.coerceIn(
+                            0f,
+                            1f
+                        )
+                    ) // Certifica-se de que o progresso está entre 0 e 1
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Green)
@@ -191,7 +154,6 @@ fun PowerLevelBar(
 }
 
 
-
 // Função de cálculo do nível e progresso (se ainda não estava no arquivo correto)
 fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
     var level = 1
@@ -204,12 +166,10 @@ fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
         totalPowerForNextLevel += 100 * level
     }
 
-    val progress = (power - powerForCurrentLevel).toFloat() / (totalPowerForNextLevel - powerForCurrentLevel)
+    val progress =
+        (power - powerForCurrentLevel).toFloat() / (totalPowerForNextLevel - powerForCurrentLevel)
     return Pair(level, progress.coerceIn(0f, 1f)) // Garante que o progresso está entre 0 e 1
 }
-
-
-
 
 
 @Composable
@@ -283,7 +243,8 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 }
 
                 val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.be_icon)
-                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, false) // Ajuste o tamanho
+                val scaledBitmap =
+                    Bitmap.createScaledBitmap(bitmap, 100, 100, false) // Ajuste o tamanho
                 val icon = BitmapDescriptorFactory.fromBitmap(scaledBitmap)
 
                 energyPools.forEach { pool ->
@@ -296,7 +257,12 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     )
 
                     Marker(
-                        state = MarkerState(position = LatLng(pool.position.latitude - 0.0003, pool.position.longitude)), // Deslocar ícone para baixo
+                        state = MarkerState(
+                            position = LatLng(
+                                pool.position.latitude - 0.0003,
+                                pool.position.longitude
+                            )
+                        ), // Deslocar ícone para baixo
                         title = "Energy Pool (+${pool.powerValue} Power)",
                         icon = icon
                     )
@@ -310,7 +276,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
             }
         }) {
-            Text("Teleport to Pin Location")
+            Text("Teleport")
         }
 
         Button(onClick = {
@@ -320,7 +286,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
             }
         }) {
-            Text("Consume Nearby Spirits")
+            Text("Consume")
         }
 
         Button(onClick = {
@@ -329,7 +295,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 Toast.makeText(context, "Nearby Energy Pools Consumed", Toast.LENGTH_SHORT).show()
             }
         }) {
-            Text("Consume Nearby Energy Pools")
+            Text("Consume Energy")
         }
     }
 }

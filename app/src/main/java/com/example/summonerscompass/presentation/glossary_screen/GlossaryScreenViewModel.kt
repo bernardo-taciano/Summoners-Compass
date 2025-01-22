@@ -32,6 +32,13 @@ class GlossaryScreenViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _filteredGlossary = MutableStateFlow<List<Champion?>>(emptyList())
+    val filteredGlossary: StateFlow<List<Champion?>> = _filteredGlossary
+
+
     init {
         getGlossary()
     }
@@ -106,6 +113,17 @@ class GlossaryScreenViewModel : ViewModel() {
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+
+        // Filtrar apenas campeões com nome exato
+        _filteredGlossary.value = if (query.isEmpty()) {
+            emptyList() // Lista vazia se o campo estiver vazio
+        } else {
+            _glossary.value.filter { it?.name?.equals(query, ignoreCase = true) == true }
         }
     }
 }
