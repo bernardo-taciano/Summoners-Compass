@@ -27,7 +27,9 @@ import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import kotlin.random.Random
 
-class HomeScreenViewModel() : ViewModel() {
+class HomeScreenViewModel(
+    private val locationManager: LocationManager
+) : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseDatabase.getInstance("https://summoners-compass-default-rtdb.europe-west1.firebasedatabase.app")
 
@@ -48,20 +50,26 @@ class HomeScreenViewModel() : ViewModel() {
     private val _randomSprites = MutableStateFlow<List<RandomSprite>>(emptyList())
     val randomSprites: StateFlow<List<RandomSprite>> = _randomSprites
 
-    private val _userLocation = MutableStateFlow(LatLng(38.7169, -9.1399)) // Default: Lisbon
+    private val _userLocation = MutableStateFlow(LatLng(0.0, 0.0))
     val userLocation: StateFlow<LatLng> = _userLocation
 
     private val _pinLocation = MutableStateFlow<LatLng?>(null)
     val pinLocation: StateFlow<LatLng?> = _pinLocation
 
+    private var lastKnownRealLocation: LatLng = LatLng(38.7169, -9.1399)
+
+    private val _userBearing = MutableStateFlow(0f)
+    val userBearing: StateFlow<Float> = _userBearing
+
     init {
+        startLocationUpdates()
         initialize()
     }
 
     private fun initialize() {
         fetchUserPower()
         startAutoSpriteGeneration()
-        generateRandomEnergyPools(5)
+        startAutoEnergyGeneration()
         monitorPlayerPosition()
     }
 
@@ -75,11 +83,20 @@ class HomeScreenViewModel() : ViewModel() {
         }
     }
 
+    private fun startAutoEnergyGeneration() {
+        viewModelScope.launch {
+            while (true) {
+                delay(5 * 60 * 1000L) // 5 minutes in milliseconds
+                generateRandomEnergyPools(5)
+            }
+        }
+    }
+
     private fun startAutoSpriteGeneration() {
         viewModelScope.launch {
             while (true) {
-                generateRandomSprites(5)
                 delay(5 * 60 * 1000L) // 5 minutes in milliseconds
+                generateRandomSprites(5)
             }
         }
     }
@@ -195,12 +212,41 @@ class HomeScreenViewModel() : ViewModel() {
         }
     }
 
+    fun startLocationUpdates() {
+        viewModelScope.launch {
+            locationManager.getLocationUpdates().collect { (location, bearing) ->
+                _userLocation.value = location
+                _userBearing.value = bearing
+                if (!locationManager.isTeleported) {
+                    lastKnownRealLocation = location
+                }
+                // Generate initial energy pools and sprites when a valid location is received
+                if (location.latitude != 0.0 && location.longitude != 0.0) {
+                    if (_energyPools.value.isEmpty()) {
+                        generateRandomEnergyPools(5)
+                    }
+                    if (_randomSprites.value.isEmpty()) {
+                        generateRandomSprites(5)
+                    }
+                }
+            }
+        }
+    }
+
     fun updatePinLocation(newLocation: LatLng) {
         _pinLocation.value = newLocation
     }
 
     fun teleportTo(newLocation: LatLng) {
+        locationManager.setLocationOffset(newLocation, lastKnownRealLocation)
         _userLocation.value = newLocation
+        _pinLocation.value = null
+    }
+
+    fun resetLocation() {
+        locationManager.resetOffset()
+        _userLocation.value = lastKnownRealLocation
+        _pinLocation.value = null
     }
 
     fun getChampionSquare(res: String) {

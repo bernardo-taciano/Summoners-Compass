@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,6 +40,7 @@ import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreen
 import com.example.summonerscompass.presentation.glossary_screen.GlossaryScreenViewModel
 import com.example.summonerscompass.presentation.home_screen.HomeScreen
 import com.example.summonerscompass.presentation.home_screen.HomeScreenViewModel
+import com.example.summonerscompass.presentation.home_screen.LocationManager
 import com.example.summonerscompass.presentation.profile_screen.CraftingScreen
 import com.example.summonerscompass.presentation.profile_screen.FriendsScreen
 import com.example.summonerscompass.presentation.profile_screen.FriendsScreenViewModel
@@ -176,7 +178,9 @@ fun NavigationHost(navController: NavHostController, modifier: Modifier = Modifi
         startDestination = Routes.homeScreen,
         modifier = modifier
     ) {
-        composable(Routes.homeScreen) { HomeScreen(navController = navController, viewModel = HomeScreenViewModel()) }
+        composable(Routes.homeScreen) {
+            HomeScreen(navController = navController,
+                       viewModel = HomeScreenViewModel(locationManager = LocationManager(LocalContext.current))) }
         composable(Routes.glossaryScreen) { GlossaryScreen(navController = navController, viewModel = GlossaryScreenViewModel()) }
         composable(Routes.craftingScreen) { CraftingScreen(navController = navController, viewModel = CraftingScreenViewModel()) }
         composable(Routes.profileScreen) { ProfileScreen(uid, navController = navController) }

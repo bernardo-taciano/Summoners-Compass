@@ -44,11 +44,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.summonerscompass.R
 import com.example.summonerscompass.ui.theme.Purple40
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -214,6 +218,7 @@ fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
 @Composable
 fun MapScreen(viewModel: HomeScreenViewModel) {
     val userLocation by viewModel.userLocation.collectAsState()
+    val userBearing by viewModel.userBearing.collectAsState()
     val pinLocation by viewModel.pinLocation.collectAsState()
     val randomSprites by viewModel.randomSprites.collectAsState()
     val energyPools by viewModel.energyPools.collectAsState()
@@ -222,7 +227,39 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         position = CameraPosition.fromLatLngZoom(userLocation, 15f)
     }
 
+    var moved = false // para so fazer a animação uma vez
+
+    LaunchedEffect(userLocation) {
+        if (!moved) {
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLng(userLocation),
+                durationMs = 1000
+            )
+            moved = true
+        }
+    }
+
     val context = LocalContext.current
+    val permissions = arrayOf(
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+
+    if (!LocationManager.hasLocationPermissions(context)) {
+        RequestLocationPermissions(
+            onPermissionsGranted = {
+                viewModel.startLocationUpdates()
+            },
+            onPermissionsDenied = {
+                Toast.makeText(
+                    context,
+                    "Location permissions are required for this app",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        )
+    }
+
     val radius = 50f
 
     Column(
@@ -243,24 +280,33 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                 cameraPositionState = cameraPositionState,
                 onMapClick = { latLng ->
                     viewModel.updatePinLocation(latLng)
-                }
+                },
+                properties = MapProperties(
+                    isMyLocationEnabled = false,
+                    isBuildingEnabled = true,
+                    mapType = MapType.NORMAL,
+                ),
+                uiSettings = MapUiSettings(
+                    myLocationButtonEnabled = false,
+                    compassEnabled = true,
+                    zoomControlsEnabled = true
+                )
             ) {
-                // Marcador do jogador
                 Marker(
                     state = MarkerState(position = userLocation),
-                    title = "Your Location",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    title = "You",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                    rotation = userBearing,
+                    flat = true,
+                    zIndex = 1f
                 )
 
-                // Marcador do pin para teletransporte
+                // Pin location marker (unchanged)
                 pinLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
                         title = "Teleport Here",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-                        onClick = {
-                            true
-                        }
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
                     )
                 }
 
@@ -318,6 +364,10 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
             }
         }) {
             Text("Teleport")
+        }
+
+        Button(onClick = { viewModel.resetLocation() }) {
+            Text("Reset Location")
         }
 
         /*

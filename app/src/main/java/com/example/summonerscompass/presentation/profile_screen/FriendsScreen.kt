@@ -64,16 +64,8 @@ fun FriendsScreen(
     navController: NavController?,
     viewModel: FriendsScreenViewModel
 ) {
-    val requests by viewModel.requests.collectAsState()
-    val friends by viewModel.friends.collectAsState()
-
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Friends", "Requests")
-
-    LaunchedEffect(Unit) {
-        viewModel.getFriends()
-        viewModel.getRequests()
-    }
 
     Scaffold(
         topBar = {
