@@ -17,8 +17,11 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.summonerscompass.models.TradeRequest
 import com.example.summonerscompass.models.User
 import com.example.summonerscompass.network.DataDragonApi
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -28,6 +31,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeler
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -61,6 +65,9 @@ class CraftingScreenViewModel(): ViewModel() {
     private val _friends = MutableStateFlow<List<User>>(emptyList())
     val friends : StateFlow<List<User>> = _friends
 
+    private val _requests = MutableStateFlow<List<TradeRequest>>(emptyList())
+    val requests : StateFlow<List<TradeRequest>> = _requests
+
     private val itemCombinations = mapOf(
         BF to mapOf(BF to DBLADE, ROD to GUNBLADE, BELT to STERAKS),
         ROD to mapOf(ROD to DCAP, BELT to RYLAIS),
@@ -69,6 +76,8 @@ class CraftingScreenViewModel(): ViewModel() {
 
     init {
         getInventory()
+        getFriends()
+        getTradeRequests()
     }
 
     fun getInventory() {
@@ -102,8 +111,73 @@ class CraftingScreenViewModel(): ViewModel() {
         }
     }
 
-    private fun getInventoryItems(inventory: List<Pair<String, Int>>) {
+    fun getInventoryByEmail(email: String, onInventoryReceived: (List<Item?>) -> Unit) {
         viewModelScope.launch {
+            try {
+                val inv = ArrayList<Item?>()
+                val userSnapshot = db.reference.child("users")
+                    .orderByChild("email")
+                    .equalTo(email)
+                    .get()
+                    .await()
+
+                val userNode = userSnapshot.children.firstOrNull() ?: return@launch
+
+                val inventoryItems = userNode.child("inventory").children.mapNotNull {
+                    it.key
+                }
+
+                val itemResponse = DataDragonApi.retrofitService.getItems()
+                for (id in inventoryItems) {
+                    try {
+                        val item = itemResponse.data[id]
+                        if (item != null) {
+                            inv.add(item)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
+                onInventoryReceived(inv)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onInventoryReceived(emptyList())
+            }
+        }
+    }
+
+    fun sendTradeRequest(friendEmail: String, senderItemId: String, receiverItemId: String,
+                         tradeLocation: LatLng, tradeDate: String, tradeTime: String) {
+        viewModelScope.launch {
+            uid?.let{
+                val friendSnapshot = db.reference.child("users")
+                    .orderByChild("email")
+                    .equalTo(friendEmail)
+                    .get()
+                    .await()
+
+                val friendNode = friendSnapshot.children.firstOrNull() ?: return@launch
+
+                val fid = friendNode.key
+                val tradeMap = mapOf(
+                    "send" to receiverItemId,
+                    "get" to senderItemId,
+                    "lat" to tradeLocation.latitude,
+                    "lng" to tradeLocation.longitude,
+                    "date" to tradeDate,
+                    "time" to tradeTime
+                )
+
+                fid?.let {
+                    db.reference.child("trade_requests").child(fid).child(uid).setValue(tradeMap)
+                }
+            }
+        }
+    }
+
+    private fun getInventoryItems(inventory: List<Pair<String, Int>>) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val itemList = ArrayList<Pair<Item?, Int>>()
                 val squareList = ArrayList<Bitmap>()
@@ -142,20 +216,15 @@ class CraftingScreenViewModel(): ViewModel() {
     }
 
     fun startObjectDetection(bitmap: Bitmap, onObjectDetected: (String) -> Unit) {
+        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 640, 480, true)
         imageLabeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
-        val inputImage = InputImage.fromBitmap(bitmap, 0)
+        val inputImage = InputImage.fromBitmap(resizedBitmap, 0)
 
         viewModelScope.launch {
             try {
                 val labels = imageLabeler?.process(inputImage)?.await()
                 labels?.forEach { label ->
-                    if (label.text == "Ring") {
-                        onObjectDetected("Ring")
-                    } else if (label.text == "Cutlery") {
-                        onObjectDetected("Cutlery")
-                    } else if (label.text == "Glasses") {
-                        onObjectDetected("Glasses")
-                    }
+                   onObjectDetected(label.text)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -303,6 +372,104 @@ class CraftingScreenViewModel(): ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    data class TradeDetails(val sendingItemId: String, val receivingItemId: String, val lat: Double, val lng: Double,
+                            val date: String, val time: String)
+
+    fun getTradeRequests() {
+        viewModelScope.launch {
+            uid?.let {
+                db.reference.child("trade_requests").child(uid)
+                    .addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (!snapshot.exists()) {
+                                println("No trade requests.")
+                                return
+                            }
+
+                            val tradeMap = HashMap<String, TradeDetails>()
+                            snapshot.children.mapNotNull { requestSnapshot ->
+                                val list = ArrayList<Any?>()
+                                val senderId = requestSnapshot.key
+                                senderId?.let {
+                                    val sendingItemId =
+                                        requestSnapshot.child("send").getValue(String::class.java)
+                                    val receivingItemId =
+                                        requestSnapshot.child("get").getValue(String::class.java)
+                                    val lat = requestSnapshot.child("lat").getValue(Double::class.java)
+                                    val lng = requestSnapshot.child("lng").getValue(Double::class.java)
+                                    val date = requestSnapshot.child("date").getValue(String::class.java)
+                                    val time = requestSnapshot.child("time").getValue(String::class.java)
+                                    if( sendingItemId != null && receivingItemId != null && lat != null && lng != null &&
+                                        date != null && time != null) {
+                                        val tradeDetails = TradeDetails(
+                                            sendingItemId,
+                                            receivingItemId,
+                                            lat,
+                                            lng,
+                                            date,
+                                            time
+                                        )
+                                        tradeMap[senderId] = tradeDetails
+                                    }
+                                }
+                            }
+
+                            getTradeRequestsData(tradeMap)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            println("Error accessing Firebase: ${error.message}")
+                        }
+                    })
+            }
+        }
+    }
+
+    private fun getTradeRequestsData(tradeMap: HashMap<String, TradeDetails>) {
+        viewModelScope.launch(Dispatchers.IO){
+            val reqs = ArrayList<TradeRequest>()
+            val usersRef = db.reference.child("users")
+            val itemResponse = DataDragonApi.retrofitService.getItems()
+
+            for((user, details) in tradeMap) {
+                try {
+                    val snapshot = usersRef.child(user).get().await()
+                    val name = snapshot.child("name").getValue(String::class.java)
+                    val email = snapshot.child("email").getValue(String::class.java)
+                    val power = snapshot.child("power").getValue(Int::class.java)
+                    if (name != null && email != null && power != null) {
+                        val user = User(name, email, power)
+                        val sendingItemId = details.sendingItemId
+                        val receivingItemId = details.receivingItemId
+                        val lat = details.lat
+                        val lng = details.lng
+                        val date = details.date
+                        val time = details.time
+                        val sendingItem = itemResponse.data[sendingItemId]
+                        val receivingItem = itemResponse.data[receivingItemId]
+                        val location = LatLng(lat, lng)
+                        if(sendingItem != null && receivingItem != null) {
+                            val tradeRequest = TradeRequest(
+                                user,
+                                sendingItem,
+                                receivingItem,
+                                location,
+                                date,
+                                time
+                            )
+
+                            reqs.add(tradeRequest)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            _requests.value = reqs
         }
     }
 }
