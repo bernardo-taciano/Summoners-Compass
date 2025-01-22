@@ -16,6 +16,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -35,12 +36,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.summonerscompass.LoginActivity
 import com.example.summonerscompass.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -92,23 +95,19 @@ fun ProfileScreen(
             profileImageBitmap = decodeBase64ToBitmap(base64Image)?.asImageBitmap()
         }
     }
-
-    // Main UI layout
     Column(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
     ) {
-        // Profile image container with edit button
+        // Parte superior do conteúdo
         Box(
             contentAlignment = Alignment.BottomEnd,
             modifier = Modifier
                 .size(120.dp)
-        ) {  // Removed the clip and background from the Box
-            // First layer: Profile image
+        ) {
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -136,7 +135,6 @@ fun ProfileScreen(
                 }
             }
 
-            // Second layer: Edit icon (will now appear on top)
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Editar Foto de Perfil",
@@ -158,7 +156,6 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Display user's name
         name?.let {
             Text(
                 text = it,
@@ -167,7 +164,6 @@ fun ProfileScreen(
             )
         }
 
-        // Display user's email
         email?.let {
             Text(
                 text = it,
@@ -179,20 +175,37 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { navController?.navigate("friends_screen") },
-            modifier = Modifier.fillMaxWidth()
+            onClick = { navController?.navigate("friends_screen/$uid") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
-            Text(text = "Social")
+            Text(text = "Friends", fontSize = 16.sp)
         }
 
-        // Logout button
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Botão de logout
         Button(
             onClick = { handleLogout(context) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFF3F2E),
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
-            Text(text = "Log Out")
+            Text(text = "Log Out", fontSize = 16.sp)
         }
     }
+
 }
 
 /**
