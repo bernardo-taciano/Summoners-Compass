@@ -15,7 +15,10 @@ import com.example.summonerscompass.models.RandomSprite
 import com.example.summonerscompass.network.DataDragonApi
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,13 +55,14 @@ class HomeScreenViewModel() : ViewModel() {
     val pinLocation: StateFlow<LatLng?> = _pinLocation
 
     init {
-        startAutoSpriteGeneration()
-        generateRandomEnergyPools(5)
-        fetchUserPower() // Garante que o power inicial será carregado
+        initialize()
     }
 
-
-
+    private fun initialize() {
+        fetchUserPower()
+        startAutoSpriteGeneration()
+        generateRandomEnergyPools(5)
+    }
 
     private fun startAutoSpriteGeneration() {
         viewModelScope.launch {
@@ -88,27 +92,26 @@ class HomeScreenViewModel() : ViewModel() {
         }
     }
 
+    private fun LatLng.distanceTo(target: LatLng): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(latitude, longitude, target.latitude, target.longitude, results)
+        return results[0]
+    }
+
     fun consumeEnergyPools(userLocation: LatLng, radius: Float) {
         viewModelScope.launch {
             val updatedPools = _energyPools.value.filterNot { pool ->
-                val distance = FloatArray(1)
-                Location.distanceBetween(
-                    userLocation.latitude, userLocation.longitude,
-                    pool.position.latitude, pool.position.longitude,
-                    distance
-                )
-                if (distance[0] <= radius) {
-                    // Ganha energia do pool
-                    addPowerToUser(pool.powerValue)
-                    true // Remove o pool consumido
+                if (userLocation.distanceTo(pool.position) <= radius) {
+                    addPowerToUser(pool.powerValue) // Adiciona poder
+                    true // Remove o pool
                 } else {
                     false
                 }
             }
-
             _energyPools.emit(updatedPools)
         }
     }
+
 
     private fun addPowerToUser(power: Int) {
         viewModelScope.launch {
@@ -125,16 +128,21 @@ class HomeScreenViewModel() : ViewModel() {
 
 
     fun fetchUserPower() {
-        viewModelScope.launch {
-            uid?.let {
-                val powerRef = db.reference.child("users").child(it).child("power")
-                powerRef.get().addOnSuccessListener { snapshot ->
+        uid?.let {
+            val powerRef = db.reference.child("users").child(it).child("power")
+            powerRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
                     val currentPower = snapshot.getValue(Int::class.java) ?: 0
                     _userPower.value = currentPower
                 }
-            }
+
+                override fun onCancelled(error: DatabaseError) {
+                    println("Failed to fetch user power: ${error.message}")
+                }
+            })
         }
     }
+
 
 
     fun updateUserPower(newPower: Int) {
@@ -150,28 +158,25 @@ class HomeScreenViewModel() : ViewModel() {
 
     fun consumeSprites(userLocation: LatLng, radius: Float) {
         viewModelScope.launch {
-            uid?.let {
+            uid?.let { uid ->
                 val snapshot = db.reference.child("users").child(uid).child("glossary").get().await()
                 val found = snapshot.children.mapNotNull { it.getValue(String::class.java) }
-                for (sprite in _randomSprites.value) {
-                    if(sprite.name in found) {
-                        continue
+
+                val updatedSprites = _randomSprites.value.filterNot { sprite ->
+                    val distance = userLocation.distanceTo(sprite.position)
+                    if (distance <= radius && sprite.name !in found) {
+                        saveSpriteToGlossary(sprite)
+                        true
                     } else {
-                        val distance =
-                            FloatArray(1) // para guardar o resultado do calculo da distancia
-                        Location.distanceBetween(
-                            userLocation.latitude, userLocation.longitude,
-                            sprite.position.latitude, sprite.position.longitude,
-                            distance
-                        )
-                        if (distance[0] <= radius) {
-                            saveSpriteToGlossary(sprite)
-                        }
+                        false
                     }
                 }
+
+                _randomSprites.emit(updatedSprites)
             }
         }
     }
+
 
     private fun saveSpriteToGlossary(sprite: RandomSprite) {
         viewModelScope.launch {
@@ -220,37 +225,30 @@ class HomeScreenViewModel() : ViewModel() {
 
     fun generateRandomSprites(count: Int) {
         viewModelScope.launch {
-            val sprites = mutableListOf<RandomSprite>()
             val baseLat = _userLocation.value.latitude
             val baseLng = _userLocation.value.longitude
 
-            val championDataList = DataDragonApi.retrofitService.getChampions().data.values.toList()
-            val championDataShuffled = championDataList.shuffled().take(count)
+            val champions = DataDragonApi.retrofitService.getChampions().data.values.shuffled().take(count)
 
-            for(champion in championDataShuffled) {
-                val randomLat = baseLat + Random.nextDouble(-0.01, 0.01)
-                val randomLng = baseLng + Random.nextDouble(-0.01, 0.01)
-                val randomPosition = LatLng(randomLat, randomLng)
-
-                val res = champion.image.full // filename
-                val name = champion.name
+            val sprites = champions.mapNotNull { champion ->
                 try {
-                    val responseBody = DataDragonApi.retrofitService.getChampionSquare(res)
-                    val inputStream = responseBody.byteStream()
-                    val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                    val randomLat = baseLat + Random.nextDouble(-0.01, 0.01)
+                    val randomLng = baseLng + Random.nextDouble(-0.01, 0.01)
+                    val randomPosition = LatLng(randomLat, randomLng)
 
-                    val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 60, 60, true)
+                    val responseBody = DataDragonApi.retrofitService.getChampionSquare(champion.image.full)
+                    val bitmap = BitmapFactory.decodeStream(responseBody.byteStream())
+                    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 60, 60, true)
 
-                    val randomSprite = RandomSprite(randomPosition, name, scaledBitmap)
-                    sprites.add(randomSprite)
+                    RandomSprite(randomPosition, champion.name, scaledBitmap)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    println("Error fetching sprite for ${champion.name}: ${e.message}")
+                    null
                 }
-
             }
-
             _randomSprites.emit(sprites)
         }
     }
+
 
 }
