@@ -59,7 +59,7 @@ class CraftingScreenViewModel(): ViewModel() {
     private val _trades = MutableStateFlow<List<Trade>>(emptyList())
     val trades : StateFlow<List<Trade>> = _trades
 
-    private val _isLoading = MutableStateFlow(false)
+    private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val itemCombinations = mapOf(
