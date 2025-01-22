@@ -235,8 +235,8 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .border(1.dp, Color.Gray)
+                .clip(RoundedCornerShape(6.dp))
+                .border(2.dp, Color.Gray)
         ) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
