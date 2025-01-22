@@ -119,15 +119,28 @@ class FriendsScreenViewModel() : ViewModel() {
         viewModelScope.launch {
             uid?.let {
                 db.reference.child("users").orderByChild("email").equalTo(email)
-                    .addListenerForSingleValueEvent(object : ValueEventListener{
+                    .addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             if (snapshot.exists()) {
                                 for (userSnapshot in snapshot.children) {
                                     val sid = userSnapshot.key
                                     if (sid != null) {
                                         db.reference.child("friend_requests").child(uid).child(sid).removeValue()
+
                                         db.reference.child("users").child(uid).child("friends").child(sid).setValue(true)
                                         db.reference.child("users").child(sid).child("friends").child(uid).setValue(true)
+
+                                        val updatedRequests = _requests.value.filter { it.email != email }
+                                        _requests.value = updatedRequests
+
+                                        val name = userSnapshot.child("name").getValue(String::class.java)
+                                        val power = userSnapshot.child("power").getValue(Int::class.java)
+                                        if (name != null && power != null) {
+                                            val newFriend = User(name, email, power)
+                                            val updatedFriends = _friends.value.toMutableList()
+                                            updatedFriends.add(newFriend)
+                                            _friends.value = updatedFriends
+                                        }
                                     }
                                 }
                             }
@@ -140,18 +153,22 @@ class FriendsScreenViewModel() : ViewModel() {
             }
         }
     }
+
 
     fun rejectFriendRequest(email: String) {
         viewModelScope.launch {
             uid?.let {
                 db.reference.child("users").orderByChild("email").equalTo(email)
-                    .addListenerForSingleValueEvent(object : ValueEventListener{
+                    .addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             if (snapshot.exists()) {
                                 for (userSnapshot in snapshot.children) {
                                     val sid = userSnapshot.key
                                     if (sid != null) {
                                         db.reference.child("friend_requests").child(uid).child(sid).removeValue()
+
+                                        val updatedRequests = _requests.value.filter { it.email != email }
+                                        _requests.value = updatedRequests
                                     }
                                 }
                             }
@@ -164,6 +181,7 @@ class FriendsScreenViewModel() : ViewModel() {
             }
         }
     }
+
 
     fun getFriends() {
         viewModelScope.launch {
