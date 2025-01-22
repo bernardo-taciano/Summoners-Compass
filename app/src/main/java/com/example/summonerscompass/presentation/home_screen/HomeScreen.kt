@@ -11,14 +11,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.summonerscompass.R
+import com.example.summonerscompass.ui.theme.Purple40
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -53,9 +60,9 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeScreenViewModel
 ) {
-    val userPower by viewModel.userPower.collectAsState()
-
+    val userPower by viewModel.userPower.collectAsState(initial = 0)
     val context = LocalContext.current
+    val (level, progress) = calculateLevelAndProgress(userPower)
 
     LaunchedEffect(Unit) {
         viewModel.fetchUserPower()
@@ -86,7 +93,9 @@ fun HomeScreen(
 
             }
 
-            PowerLevelBar(
+            CustomProgressBar(
+                level = level,
+                progress = progress,
                 power = userPower,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,61 +106,94 @@ fun HomeScreen(
     }
 }
 
-
-@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
-fun PowerLevelBar(
-    power: Int,
-    modifier: Modifier = Modifier
-) {
-    val (level, progress) = calculateLevelAndProgress(power)
-
-    println("PowerLevelBar -> Power: $power, Level: $level, Progress: $progress")
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(16.dp)
+fun CustomProgressBar(level: Int, progress: Float, power: Int, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .padding(16.dp)
+            .background(
+                color = Color(0xFFEDF3FF), // Fundo do card
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(16.dp),
+        contentAlignment = Alignment.CenterStart
     ) {
-        Text(
-            text = "Level $level",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.Gray)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(
-                        progress.coerceIn(
-                            0f,
-                            1f
+                    .size(50.dp) // Ajuste o tamanho se necessário
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary), // Cor da barra preenchida
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Lvl",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White
                         )
                     )
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Green)
-            )
-        }
+                    Text(
+                        text = "$level",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                }
+            }
 
-        Text(
-            text = "Power: $power",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+
+            // Texto com a percentagem e descrição
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "$power Power - ${(progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    )
+                }
+
+                // Barra de progresso
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFFD6D8DB)) // Cor de fundo da barra
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress) // Preenchimento conforme o progresso
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.primary) // Cor da barra preenchida
+                    )
+                }
+            }
+        }
     }
 }
 
 
 fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
     var level = 1
-    var powerForCurrentLevel = 0
-    var totalPowerForNextLevel = 100
+    var powerForCurrentLevel = 0 // Alterado para começar do nível zero
+    var totalPowerForNextLevel = 100 // Primeiro nível termina com 100
 
     while (power >= totalPowerForNextLevel) {
         level++
@@ -165,8 +207,9 @@ fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
         0f
     }
 
-    return Pair(level, progress.coerceIn(0f, 1f))
+    return Pair(level, progress.coerceIn(0f, 1f)) // Garante que o progresso está entre 0 e 1
 }
+
 
 
 @Composable
@@ -203,12 +246,14 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     viewModel.updatePinLocation(latLng)
                 }
             ) {
+                // Marcador do jogador
                 Marker(
                     state = MarkerState(position = userLocation),
                     title = "Your Location",
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                 )
 
+                // Marcador do pin para teletransporte
                 pinLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
@@ -220,6 +265,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     )
                 }
 
+                // Exibe sprites aleatórios no mapa
                 randomSprites.forEach { sprite ->
                     Circle(
                         center = sprite.position,
@@ -245,8 +291,8 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     Circle(
                         center = pool.position,
                         radius = radius.toDouble(),
-                        fillColor = Color(0x330000FF),
-                        strokeColor = Color.Blue,
+                        fillColor = Color(0x330000FF), // Azul com transparência
+                        strokeColor = Color.Blue, // Azul mais forte na borda
                         strokeWidth = 2f
                     )
 
@@ -256,7 +302,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                                 pool.position.latitude - 0.0003,
                                 pool.position.longitude
                             )
-                        ),
+                        ), // Deslocar ícone para baixo
                         title = "Energy Pool (+${pool.powerValue} Power)",
                         icon = icon
                     )
