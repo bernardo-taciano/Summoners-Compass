@@ -452,13 +452,29 @@ class CraftingScreenViewModel(): ViewModel() {
                         val receivingItem = itemResponse.data[receivingItemId]
                         val location = LatLng(lat, lng)
                         if(sendingItem != null && receivingItem != null) {
+                            val res1 = sendingItem.image.full
+                            val responseBody1: ResponseBody =
+                                DataDragonApi.retrofitService.getItemSquare(res1)
+
+                            val inputStream1 = responseBody1.byteStream()
+                            val bitmap1: Bitmap = BitmapFactory.decodeStream(inputStream1)
+
+                            val res2 = receivingItem.image.full
+                            val responseBody2: ResponseBody =
+                                DataDragonApi.retrofitService.getItemSquare(res2)
+
+                            val inputStream2 = responseBody2.byteStream()
+                            val bitmap2: Bitmap = BitmapFactory.decodeStream(inputStream2)
+
                             val tradeRequest = TradeRequest(
                                 user,
                                 sendingItem,
                                 receivingItem,
                                 location,
                                 date,
-                                time
+                                time,
+                                bitmap1,
+                                bitmap2
                             )
 
                             reqs.add(tradeRequest)
