@@ -189,7 +189,7 @@ fun RegisterScreen(
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
-                    "Register",
+                    "Summoner's Compass",
                     fontSize = 16.sp
                 )
             }
