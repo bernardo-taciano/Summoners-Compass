@@ -52,7 +52,6 @@ import com.example.summonerscompass.models.User
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
-    uid: String,
     navController: NavController?,
     viewModel: FriendsScreenViewModel
 )  {

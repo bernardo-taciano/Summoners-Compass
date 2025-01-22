@@ -179,7 +179,7 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { navController?.navigate("friends_screen/$uid") },
+            onClick = { navController?.navigate("friends_screen") },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Social")
