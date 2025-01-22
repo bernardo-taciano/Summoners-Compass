@@ -178,6 +178,13 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Button(
+            onClick = { navController?.navigate("friends_screen/$uid") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Friends")
+        }
+
         // Logout button
         Button(
             onClick = { handleLogout(context) },
