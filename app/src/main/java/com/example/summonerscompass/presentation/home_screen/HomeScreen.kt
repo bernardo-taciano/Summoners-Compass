@@ -86,12 +86,11 @@ fun HomeScreen(
 
             }
 
-            // Barra de Power na parte inferior
             PowerLevelBar(
                 power = userPower,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter) // Fixa na parte inferior
+                    .align(Alignment.BottomCenter)
                     .padding(16.dp)
             )
         }
@@ -105,24 +104,20 @@ fun PowerLevelBar(
     power: Int,
     modifier: Modifier = Modifier
 ) {
-    // Calcular nível e progresso com base no valor de power
     val (level, progress) = calculateLevelAndProgress(power)
 
-    // Log para depuração
     println("PowerLevelBar -> Power: $power, Level: $level, Progress: $progress")
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.padding(16.dp)
     ) {
-        // Exibir o nível atual
         Text(
             text = "Level $level",
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Barra de Progresso
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -137,14 +132,13 @@ fun PowerLevelBar(
                             0f,
                             1f
                         )
-                    ) // Certifica-se de que o progresso está entre 0 e 1
+                    )
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Green)
             )
         }
 
-        // Exibir o valor atual de power
         Text(
             text = "Power: $power",
             style = MaterialTheme.typography.bodyMedium,
@@ -156,8 +150,8 @@ fun PowerLevelBar(
 
 fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
     var level = 1
-    var powerForCurrentLevel = 0 // Alterado para começar do nível zero
-    var totalPowerForNextLevel = 100 // Primeiro nível termina com 100
+    var powerForCurrentLevel = 0
+    var totalPowerForNextLevel = 100
 
     while (power >= totalPowerForNextLevel) {
         level++
@@ -171,9 +165,8 @@ fun calculateLevelAndProgress(power: Int): Pair<Int, Float> {
         0f
     }
 
-    return Pair(level, progress.coerceIn(0f, 1f)) // Garante que o progresso está entre 0 e 1
+    return Pair(level, progress.coerceIn(0f, 1f))
 }
-
 
 
 @Composable
@@ -210,14 +203,12 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     viewModel.updatePinLocation(latLng)
                 }
             ) {
-                // Marcador do jogador
                 Marker(
                     state = MarkerState(position = userLocation),
                     title = "Your Location",
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                 )
 
-                // Marcador do pin para teletransporte
                 pinLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
@@ -229,7 +220,6 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     )
                 }
 
-                // Exibe sprites aleatórios no mapa
                 randomSprites.forEach { sprite ->
                     Circle(
                         center = sprite.position,
@@ -255,8 +245,8 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                     Circle(
                         center = pool.position,
                         radius = radius.toDouble(),
-                        fillColor = Color(0x330000FF), // Azul com transparência
-                        strokeColor = Color.Blue, // Azul mais forte na borda
+                        fillColor = Color(0x330000FF),
+                        strokeColor = Color.Blue,
                         strokeWidth = 2f
                     )
 
@@ -266,7 +256,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
                                 pool.position.latitude - 0.0003,
                                 pool.position.longitude
                             )
-                        ), // Deslocar ícone para baixo
+                        ),
                         title = "Energy Pool (+${pool.powerValue} Power)",
                         icon = icon
                     )
