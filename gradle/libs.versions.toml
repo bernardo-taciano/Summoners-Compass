@@ -19,6 +19,7 @@ firebaseDatabase = "21.0.0"
 common = "18.11.0"
 objectDetectionCommon = "18.0.0"
 visionImageLabeling = "17.0.3"
+material = "1.12.0"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
@@ -49,6 +50,7 @@ firebase-database = { group = "com.google.firebase", name = "firebase-database",
 common = { group = "com.google.mlkit", name = "common", version.ref = "common" }
 object-detection-common = { group = "com.google.mlkit", name = "object-detection-common", version.ref = "objectDetectionCommon" }
 vision-image-labeling = { module = "com.google.mlkit:vision-image-labeling", version.ref = "visionImageLabeling" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
