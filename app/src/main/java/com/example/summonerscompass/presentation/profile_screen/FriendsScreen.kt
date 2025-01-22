@@ -1,6 +1,7 @@
 package com.example.summonerscompass.presentation.profile_screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,11 +22,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -48,24 +52,24 @@ import com.example.summonerscompass.models.User
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
-    uid: String,
     navController: NavController?,
     viewModel: FriendsScreenViewModel
 )  {
-    val friends by viewModel.friends.collectAsState()
     val requests by viewModel.requests.collectAsState()
+    val friends by viewModel.friends.collectAsState()
+    
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Friends", "Requests")
 
     LaunchedEffect(Unit){
         viewModel.getFriends()
         viewModel.getRequests()
     }
 
-    var friendEmail by remember { mutableStateOf("") }
-
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Friends") },
+            CenterAlignedTopAppBar(
+                title = { Text("Social") },
                 navigationIcon = {
                     IconButton(onClick = { navController?.popBackStack() }) {
                         Icon(
@@ -78,67 +82,97 @@ fun FriendsScreen(
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+            modifier = Modifier.padding(paddingValues)
         ) {
-            // Input box for email
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextField(
-                    value = friendEmail,
-                    onValueChange = { friendEmail = it },
-                    label = { Text("Enter email") },
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = {
-                    viewModel.sendFriendRequest(friendEmail)
-                }) {
-                    Text("Send Request")
+            // Tab Row
+            TabRow(selectedTabIndex = selectedTabIndex) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = { selectedTabIndex = index },
+                        text = { Text(title) }
+                    )
                 }
             }
 
-            Text(
-                text = "Friend Requests",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
+            // Content based on selected tab
+            when (selectedTabIndex) {
+                0 -> FriendsList(viewModel)  // Display Friends List
+                1 -> RequestsList(viewModel) // Display Requests List
+            }
+        }
+    }
+}
+
+@Composable
+fun RequestsList(viewModel: FriendsScreenViewModel) {
+    val requests by viewModel.requests.collectAsState()
+    var friendEmail by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit){
+        viewModel.getRequests()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = friendEmail,
+                onValueChange = { friendEmail = it },
+                label = { Text("Enter email") },
+                modifier = Modifier.weight(1f)
             )
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(1),
-                contentPadding = PaddingValues(16.dp),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(requests) { user ->
-                    RequestItem(user, viewModel)
-                }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = {
+                viewModel.sendFriendRequest(friendEmail)
+            }) {
+                Text("Send Request")
             }
-
-            Text(
-                text = "Friends List",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(1),
-                contentPadding = PaddingValues(16.dp),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(friends) { friend ->
-                    FriendItem(friend)
-                }
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(1),
+            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(requests) { user ->
+                RequestItem(user, viewModel)
             }
+        }
+    }
+}
 
+@Composable
+fun FriendsList(viewModel: FriendsScreenViewModel) {
+    val friends by viewModel.friends.collectAsState()
+
+    LaunchedEffect(Unit){
+        viewModel.getFriends()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(1),
+            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(friends) { friend ->
+                FriendItem(friend)
+            }
         }
     }
 }

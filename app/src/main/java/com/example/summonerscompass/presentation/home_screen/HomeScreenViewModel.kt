@@ -62,6 +62,17 @@ class HomeScreenViewModel() : ViewModel() {
         fetchUserPower()
         startAutoSpriteGeneration()
         generateRandomEnergyPools(5)
+        monitorPlayerPosition()
+    }
+
+
+    fun monitorPlayerPosition() {
+        viewModelScope.launch {
+            userLocation.collect { currentLocation ->
+                consumeEnergyPools(currentLocation, radius = 50f)
+                consumeSprites(currentLocation, radius = 50f)
+            }
+        }
     }
 
     private fun startAutoSpriteGeneration() {
@@ -112,7 +123,6 @@ class HomeScreenViewModel() : ViewModel() {
         }
     }
 
-
     private fun addPowerToUser(power: Int) {
         viewModelScope.launch {
             uid?.let {
@@ -142,8 +152,6 @@ class HomeScreenViewModel() : ViewModel() {
             })
         }
     }
-
-
 
     fun updateUserPower(newPower: Int) {
         viewModelScope.launch {
@@ -249,6 +257,4 @@ class HomeScreenViewModel() : ViewModel() {
             _randomSprites.emit(sprites)
         }
     }
-
-
 }

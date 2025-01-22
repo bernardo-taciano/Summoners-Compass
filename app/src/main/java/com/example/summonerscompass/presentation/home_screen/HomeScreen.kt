@@ -82,7 +82,6 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-
                 Text(
                     text = "Summoner's Compass",
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
@@ -90,7 +89,6 @@ fun HomeScreen(
                 )
 
                 MapScreen(viewModel)
-
             }
 
             CustomProgressBar(
@@ -105,6 +103,7 @@ fun HomeScreen(
         }
     }
 }
+
 
 @Composable
 fun CustomProgressBar(level: Int, progress: Float, power: Int, modifier: Modifier = Modifier) {
@@ -310,6 +309,8 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(onClick = {
             pinLocation?.let {
                 viewModel.teleportTo(it)
@@ -319,6 +320,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
             Text("Teleport")
         }
 
+        /*
         Button(onClick = {
             userLocation.let {
                 viewModel.consumeSprites(it, radius)
@@ -337,5 +339,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         }) {
             Text("Consume Energy")
         }
+
+         */
     }
 }

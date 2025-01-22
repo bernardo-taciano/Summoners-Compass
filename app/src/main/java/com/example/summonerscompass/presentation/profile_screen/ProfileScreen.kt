@@ -175,7 +175,7 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { navController?.navigate("friends_screen/$uid") },
+            onClick = { navController?.navigate("friends_screen") },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -185,7 +185,7 @@ fun ProfileScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-            Text(text = "Friends", fontSize = 16.sp)
+            Text(text = "Social", fontSize = 16.sp)
         }
 
         Spacer(modifier = Modifier.weight(1f))
