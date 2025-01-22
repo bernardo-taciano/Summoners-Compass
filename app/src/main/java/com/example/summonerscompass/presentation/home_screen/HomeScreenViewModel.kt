@@ -55,10 +55,18 @@ class HomeScreenViewModel() : ViewModel() {
         startAutoSpriteGeneration()
         generateRandomEnergyPools(5)
         fetchUserPower() // Garante que o power inicial será carregado
+        monitorPlayerPosition()
     }
 
 
-
+    fun monitorPlayerPosition() {
+        viewModelScope.launch {
+            userLocation.collect { currentLocation ->
+                consumeEnergyPools(currentLocation, radius = 50f)
+                consumeSprites(currentLocation, radius = 50f)
+            }
+        }
+    }
 
     private fun startAutoSpriteGeneration() {
         viewModelScope.launch {
