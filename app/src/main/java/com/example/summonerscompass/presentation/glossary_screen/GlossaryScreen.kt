@@ -82,18 +82,16 @@ fun GlossaryScreen(
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                if(champions.size > 1) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { query ->
-                            viewModel.updateSearchQuery(query)
-                        },
-                        label = { Text("Search Champion") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { query ->
+                        viewModel.updateSearchQuery(query)
+                    },
+                    label = { Text("Search Champion") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
