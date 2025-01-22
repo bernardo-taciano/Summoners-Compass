@@ -5,10 +5,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,25 +60,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.summonerscompass.models.TradeRequest
+import com.example.summonerscompass.models.Trade
 import com.example.summonerscompass.models.User
-import com.example.summonerscompass.presentation.profile_screen.FriendItem
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,14 +83,16 @@ fun TradingScreen(
     val inventory by viewModel.inventory.collectAsState()
     val friends by viewModel.friends.collectAsState()
     val requests by viewModel.requests.collectAsState()
+    val trades by viewModel.requests.collectAsState()
 
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("New Trade", "Current Trades")
+    val tabs = listOf("New Trade", "Active Trades", "Trade Requests")
 
     LaunchedEffect(Unit) {
         viewModel.getInventory()
         viewModel.getFriends()
         viewModel.getTradeRequests()
+        viewModel.getTrades()
     }
 
     Scaffold(
@@ -136,7 +127,9 @@ fun TradingScreen(
             // Content based on selected tab
             when (selectedTabIndex) {
                 0 -> NewTrade(viewModel)
-                1 -> CurrentTrades(viewModel)
+                1 -> ActiveTrades(viewModel)
+                2 -> TradeRequests(viewModel)
+
             }
         }
 
@@ -448,7 +441,7 @@ fun FriendsDropdown(
 }
 
 @Composable
-fun CurrentTrades(
+fun TradeRequests(
     viewModel: CraftingScreenViewModel
 )  {
     val requests by viewModel.requests.collectAsState()
@@ -470,18 +463,18 @@ fun CurrentTrades(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(requests) { request ->
-                RequestItem(request)
+                RequestItem(request, viewModel)
             }
         }
     }
 }
 
 @Composable
-fun RequestItem(request: TradeRequest) {
+fun RequestItem(request: Trade, viewModel: CraftingScreenViewModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(350.dp)
+            .height(370.dp)
             .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -612,18 +605,190 @@ fun RequestItem(request: TradeRequest) {
         ) {
             Button(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
-                onClick = { }
+                onClick = { viewModel.acceptTradeRequest(request)}
             ) {
                 Text("Accept")
             }
             Spacer(modifier = Modifier.width(16.dp))
             Button(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                onClick = { }
+                onClick = { viewModel.rejectTradeRequest(request)}
             ) {
                 Text("Reject")
             }
         }
+    }
+}
 
+@Composable
+fun ActiveTrades(
+    viewModel: CraftingScreenViewModel
+)  {
+    val trades by viewModel.trades.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.getTrades()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(1),
+            contentPadding = PaddingValues(8.dp),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(trades) { trade ->
+                TradeItem(trade, viewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun TradeItem(trade: Trade, viewModel: CraftingScreenViewModel) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(370.dp)
+            .padding(8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "From: ${trade.sender.name}",
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .height(130.dp)
+                    .padding(8.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "You get:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Image(
+                        bitmap = trade.receivingSquare.asImageBitmap(),
+                        contentDescription = "${trade.receivingItem.name} Square",
+                        modifier = Modifier
+                            .size(70.dp)
+                            .padding(8.dp)
+                    )
+                    Text(
+                        text = trade.receivingItem.name,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Trading icon in the center
+            Icon(
+                imageVector = Icons.Default.SwapHoriz, // Replace with a trading icon of your choice
+                contentDescription = "Trade Icon",
+                modifier = Modifier.size(32.dp), // Adjust size as needed
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .height(130.dp)
+                    .padding(8.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "They get:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Image(
+                        bitmap = trade.sendingSquare.asImageBitmap(),
+                        contentDescription = "${trade.sendingItem.name} Square",
+                        modifier = Modifier
+                            .size(70.dp)
+                            .padding(8.dp)
+                    )
+                    Text(
+                        text = trade.sendingItem.name,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Location: (${trade.location.latitude},${trade.location.longitude})",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Date: ${trade.date}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(32.dp))
+            Text(
+                text = "Time: ${trade.time}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
+                onClick = { viewModel.confirmTrade(trade)}
+            ) {
+                Text("Confirm")
+            }
+        }
     }
 }

@@ -4,7 +4,7 @@ import Item
 import android.graphics.Bitmap
 import com.google.android.gms.maps.model.LatLng
 
-data class TradeRequest(
+data class Trade(
     val sender: User,
     val sendingItem: Item,
     val receivingItem: Item,
