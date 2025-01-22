@@ -17,6 +17,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
+import com.example.summonerscompass.models.User
 import com.example.summonerscompass.network.DataDragonApi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -49,8 +50,6 @@ class CraftingScreenViewModel(): ViewModel() {
 
     private val uid = auth.uid
 
-    var cameraPermissionGranted by mutableStateOf(false)
-    var cameraProvider: ProcessCameraProvider? = null
     var imageLabeler: ImageLabeler? = null
 
     private val _inventory = MutableStateFlow<List<Pair<Item?, Int>>>(emptyList())
@@ -58,6 +57,9 @@ class CraftingScreenViewModel(): ViewModel() {
 
     private val _squares = MutableStateFlow<List<Bitmap>>(emptyList())
     val squares: StateFlow<List<Bitmap>> = _squares
+
+    private val _friends = MutableStateFlow<List<User>>(emptyList())
+    val friends : StateFlow<List<User>> = _friends
 
     private val itemCombinations = mapOf(
         BF to mapOf(BF to DBLADE, ROD to GUNBLADE, BELT to STERAKS),
@@ -247,6 +249,60 @@ class CraftingScreenViewModel(): ViewModel() {
             }
         } ?: run {
             println("User not authenticated.")
+        }
+    }
+
+    fun getFriends() {
+        viewModelScope.launch {
+            uid?.let {
+                db.reference.child("users").child(uid).child("friends")
+                    .addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (!snapshot.exists()) {
+                                println("Empty friends list.")
+                                return
+                            }
+
+                            val friendsList = snapshot.children.mapNotNull { friendSnapshot ->
+                                val friendId = friendSnapshot.key
+                                friendId
+                            }
+
+                            getFriendsData(friendsList)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            println("Error accessing Firebase: ${error.message}")
+                        }
+                    })
+            }
+        }
+    }
+
+    private fun getFriendsData(friendsList: List<String>) {
+        viewModelScope.launch {
+            try{
+                val friends = ArrayList<User>()
+                val usersRef = db.reference.child("users")
+                for (fid in friendsList) {
+                    try {
+                        val snapshot = usersRef.child(fid).get().await()
+                        val name = snapshot.child("name").getValue(String::class.java)
+                        val email = snapshot.child("email").getValue(String::class.java)
+                        //val profileImage = snapshot.child("profileImage").getValue(String::class.java)
+                        val power = snapshot.child("power").getValue(Int::class.java)
+                        if (name != null && email != null && power != null) {
+                            val user = User(name, email, power)
+                            friends.add(user)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                _friends.value = friends
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
