@@ -115,6 +115,35 @@ class FriendsScreenViewModel() : ViewModel() {
             })
     }
 
+    fun removeFriend(email: String) {
+        viewModelScope.launch {
+            uid?.let {
+                db.reference.child("users").orderByChild("email").equalTo(email)
+                    .addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (snapshot.exists()) {
+                                for (userSnapshot in snapshot.children) {
+                                    val friendId = userSnapshot.key
+                                    if (friendId != null) {
+                                        db.reference.child("users").child(uid).child("friends").child(friendId).removeValue()
+                                        db.reference.child("users").child(friendId).child("friends").child(uid).removeValue()
+
+                                        val updatedFriends = _friends.value.filter { it.email != email }
+                                        _friends.value = updatedFriends
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.e("UserSearch", "Error removing friend: ${error.message}")
+                        }
+                    })
+            }
+        }
+    }
+
+
     fun acceptFriendRequest(email: String) {
         viewModelScope.launch {
             uid?.let {

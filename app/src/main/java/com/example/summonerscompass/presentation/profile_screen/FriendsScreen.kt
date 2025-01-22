@@ -180,14 +180,14 @@ fun FriendsList(viewModel: FriendsScreenViewModel) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(friends) { friend ->
-                FriendItem(friend)
+                FriendItem(friend, viewModel)
             }
         }
     }
 }
 
 @Composable
-fun FriendItem(friend: User) {
+fun FriendItem(friend: User, viewModel: FriendsScreenViewModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -202,47 +202,62 @@ fun FriendItem(friend: User) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Profile picture
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .background(Color.Gray), // Placeholder color
-                contentAlignment = Alignment.Center
-            ) {
-                // Display profile image if available, otherwise placeholder
-
-                Text(
-                    text = friend.name.first().toString(),
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Friend details
-            Column(
+            // Profile and details
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = friend.name,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Power - ${friend.power}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                // Profile picture placeholder
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(Color.Gray), // Placeholder color
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = friend.name.first().toString(),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Friend details
+                Column {
+                    Text(
+                        text = friend.name,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Power - ${friend.power}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            // Remove button
+            Button(
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)), // Red color
+                shape = RoundedCornerShape(8.dp),
+                onClick = {
+                    viewModel.removeFriend(friend.email)
+                }
+            ) {
+                Text("Remove", color = Color.White)
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
