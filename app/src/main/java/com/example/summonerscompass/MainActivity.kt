@@ -115,7 +115,7 @@ fun MainScreen(modifier: Modifier = Modifier, uid: String) {
         ),
         BottomNavigationItem(
             route = Routes.craftingScreen,
-            title = "Crafting",
+            title = "Items",
             selectedIcon = Icons.Filled.Build,
             unselectedIcon = Icons.Filled.Build,
         ),

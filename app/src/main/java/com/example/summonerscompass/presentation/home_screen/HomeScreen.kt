@@ -271,7 +271,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(400.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .border(2.dp, Color.Gray)
         ) {
@@ -357,39 +357,23 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            pinLocation?.let {
-                viewModel.teleportTo(it)
-                Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
+        Row(
+
+        ) {
+            Button(onClick = {
+                pinLocation?.let {
+                    viewModel.teleportTo(it)
+                    Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
+                }
+            }) {
+                Text("Teleport To Pin")
             }
-        }) {
-            Text("Teleport")
-        }
 
-        Button(onClick = { viewModel.resetLocation() }) {
-            Text("Reset Location")
-        }
+            Spacer(modifier = Modifier.width(16.dp))
 
-        /*
-        Button(onClick = {
-            userLocation.let {
-                viewModel.consumeSprites(it, radius)
-                viewModel.consumeEnergyPools(it, radius)
-                Toast.makeText(context, "Nearby Spirits Consumed", Toast.LENGTH_SHORT).show()
+            Button(onClick = { viewModel.resetLocation() }) {
+                Text("Go Back Home")
             }
-        }) {
-            Text("Consume")
         }
-
-        Button(onClick = {
-            userLocation.let {
-                viewModel.consumeEnergyPools(it, radius)
-                Toast.makeText(context, "Nearby Energy Pools Consumed", Toast.LENGTH_SHORT).show()
-            }
-        }) {
-            Text("Consume Energy")
-        }
-
-         */
     }
 }
