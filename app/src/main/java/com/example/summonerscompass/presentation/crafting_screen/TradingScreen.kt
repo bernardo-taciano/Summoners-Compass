@@ -604,14 +604,14 @@ fun RequestItem(request: Trade, viewModel: CraftingScreenViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
                 onClick = { viewModel.acceptTradeRequest(request)}
             ) {
                 Text("Accept")
             }
             Spacer(modifier = Modifier.width(16.dp))
             Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC4E3F)),
                 onClick = { viewModel.rejectTradeRequest(request)}
             ) {
                 Text("Reject")
@@ -784,7 +784,7 @@ fun TradeItem(trade: Trade, viewModel: CraftingScreenViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
                 onClick = { viewModel.confirmTrade(trade)}
             ) {
                 Text("Confirm")

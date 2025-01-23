@@ -252,6 +252,28 @@ class CraftingScreenViewModel(): ViewModel() {
         }
     }
 
+    fun removeItemFromInventory(itemId: String) {
+        viewModelScope.launch {
+            uid?.let { userId ->
+                val userInventoryRef = db.getReference("users").child(userId).child("inventory").child(itemId)
+                userInventoryRef.get()
+                    .addOnSuccessListener { snapshot ->
+                        if (snapshot.exists()) {
+                            val currentCount = snapshot.child("count").getValue(Int::class.java) ?: 0
+                            if (currentCount > 1)
+                                userInventoryRef.child("count").setValue(currentCount - 1)
+                            else
+                                userInventoryRef.removeValue()
+
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        e.printStackTrace()
+                    }
+            }
+        }
+    }
+
     fun combineItems(item1: String, item2: String) {
         uid?.let { uid ->
             val userInventoryRef = db.reference.child("users").child(uid).child("inventory")

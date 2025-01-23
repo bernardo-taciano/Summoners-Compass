@@ -198,7 +198,7 @@ fun ProfileScreen(
                 .height(50.dp),
             shape = RoundedCornerShape(10.dp),
             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFF3F2E),
+                containerColor = Color(0xFFCC4E3F),
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {

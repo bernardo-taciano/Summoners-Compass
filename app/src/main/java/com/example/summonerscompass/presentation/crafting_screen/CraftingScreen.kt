@@ -14,17 +14,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.summonerscompass.presentation.crafting_screen.CraftingScreenViewModel
 import com.example.summonerscompass.routes.Routes
+import com.google.android.material.color.MaterialColors
 
 private const val BF = "1038"
 private const val ROD = "1058"
@@ -82,7 +89,7 @@ fun CraftingScreen(
         if (bitmap != null) {
             viewModel.startObjectDetection(bitmap, onObjectDetected = {
                     detectedObject -> when(detectedObject) {
-                "Ring" -> viewModel.addItemToInventory(ROD)
+                "Metal" -> viewModel.addItemToInventory(ROD)
                 "Cutlery" -> viewModel.addItemToInventory(BF)
                 "Glasses" -> viewModel.addItemToInventory(BELT)
             }
@@ -168,10 +175,12 @@ fun CraftingScreen(
                             val itemId = item.image.full.dropLast(4)
                             Box(
                                 modifier = Modifier
-                                    .height(150.dp)
+                                    .height(160.dp)
                                     .fillMaxWidth()
                                     .background(
-                                        if (selectedItems.contains(itemId)) MaterialTheme.colorScheme.primaryContainer
+                                        if (selectedItems.size == 2 && selectedItems.first() == itemId
+                                            && selectedItems.last() == itemId) Color(0xFFE1BEE7)
+                                        else if (selectedItems.contains(itemId)) MaterialTheme.colorScheme.primaryContainer
                                         else MaterialTheme.colorScheme.surfaceVariant,
                                         RoundedCornerShape(16.dp)
                                     )
@@ -198,13 +207,22 @@ fun CraftingScreen(
                                     )
                                     Text(
                                         text = item.name,
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
                                         text = "Count: $count",
                                         fontSize = 12.sp
                                     )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Remove item",
+                                        tint = Color.White,
+                                        modifier = Modifier.clickable { viewModel.removeItemFromInventory(itemId) }
+                                    )
+
                                 }
                             }
                         }

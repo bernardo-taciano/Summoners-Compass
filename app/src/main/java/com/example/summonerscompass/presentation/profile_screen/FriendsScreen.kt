@@ -238,7 +238,7 @@ fun FriendItem(friend: User, viewModel: FriendsScreenViewModel) {
 
             // Remove button
             Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)), // Red color
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC4E3F)), // Red color
                 shape = RoundedCornerShape(8.dp),
                 onClick = {
                     viewModel.removeFriend(friend.email)
@@ -357,14 +357,14 @@ fun RequestItem(user: User, viewModel: FriendsScreenViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
                     shape = RoundedCornerShape(8.dp),
                     onClick = { viewModel.acceptFriendRequest(user.email) }
                 ) {
                     Text("Accept", color = Color.White)
                 }
                 Button(
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC4E3F)),
                     shape = RoundedCornerShape(8.dp),
                     onClick = { viewModel.rejectFriendRequest(user.email) }
                 ) {
