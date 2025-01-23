@@ -59,7 +59,7 @@ class CraftingScreenViewModel(): ViewModel() {
     private val _trades = MutableStateFlow<List<Trade>>(emptyList())
     val trades : StateFlow<List<Trade>> = _trades
 
-    private val _isLoading = MutableStateFlow(true)
+    private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val itemCombinations = mapOf(
@@ -69,13 +69,14 @@ class CraftingScreenViewModel(): ViewModel() {
     )
 
     init {
+        _isLoading.value = true
         getInventory()
         getFriends()
         getTradeRequests()
+        _isLoading.value = false
     }
 
     fun getInventory() {
-        _isLoading.value = true
         uid?.let { uid ->
             db.reference.child("users").child(uid).child("inventory")
                 .addValueEventListener(object : ValueEventListener {
@@ -95,12 +96,10 @@ class CraftingScreenViewModel(): ViewModel() {
                             }
                         }
                         getInventoryItems(inventoryList)
-                        _isLoading.value = false
                     }
 
                     override fun onCancelled(error: DatabaseError) {
                         println("Error accessing Firebase: ${error.message}")
-                        _isLoading.value = false
                     }
                 })
         } ?: run {
