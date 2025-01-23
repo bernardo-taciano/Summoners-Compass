@@ -14,10 +14,13 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -117,7 +120,13 @@ fun MainScreen(modifier: Modifier = Modifier, uid: String) {
             route = Routes.craftingScreen,
             title = "Items",
             selectedIcon = Icons.Filled.Build,
-            unselectedIcon = Icons.Filled.Build,
+            unselectedIcon = Icons.Outlined.Build,
+        ),
+        BottomNavigationItem(
+            route = Routes.tradingScreen,
+            title = "Trades",
+            selectedIcon = Icons.Filled.SwapHoriz,
+            unselectedIcon = Icons.Outlined.SwapHoriz
         ),
         BottomNavigationItem(
             route = Routes.profileScreen,
@@ -125,9 +134,9 @@ fun MainScreen(modifier: Modifier = Modifier, uid: String) {
             selectedIcon = Icons.Filled.Person,
             unselectedIcon = Icons.Outlined.Person,
         )
+
     )
 
-    // Scaffold
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {

@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -223,156 +225,173 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
     val randomSprites by viewModel.randomSprites.collectAsState()
     val energyPools by viewModel.energyPools.collectAsState()
 
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(userLocation, 15f)
+    var isLoading = remember { false }
+
+    when(userLocation) {
+        LatLng(0.0,0.0) -> isLoading = true
+        else -> isLoading = false
     }
 
-    var moved = false // para so fazer a animação uma vez
-
-    LaunchedEffect(userLocation) {
-        if (!moved) {
-            cameraPositionState.animate(
-                update = CameraUpdateFactory.newLatLng(userLocation),
-                durationMs = 1000
-            )
-            moved = true
-        }
-    }
-
-    val context = LocalContext.current
-    val permissions = arrayOf(
-        android.Manifest.permission.ACCESS_FINE_LOCATION,
-        android.Manifest.permission.ACCESS_COARSE_LOCATION
-    )
-
-    if (!LocationManager.hasLocationPermissions(context)) {
-        RequestLocationPermissions(
-            onPermissionsGranted = {
-                viewModel.startLocationUpdates()
-            },
-            onPermissionsDenied = {
-                Toast.makeText(
-                    context,
-                    "Location permissions are required for this app",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        )
-    }
-
-    val radius = 50f
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    if (isLoading) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(400.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .border(2.dp, Color.Gray)
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                onMapClick = { latLng ->
-                    viewModel.updatePinLocation(latLng)
-                },
-                properties = MapProperties(
-                    isMyLocationEnabled = false,
-                    isBuildingEnabled = true,
-                    mapType = MapType.NORMAL,
-                ),
-                uiSettings = MapUiSettings(
-                    myLocationButtonEnabled = false,
-                    compassEnabled = true,
-                    zoomControlsEnabled = true
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+    } else {
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(userLocation, 15f)
+        }
+
+        var moved = false // para so fazer a animação uma vez
+
+        LaunchedEffect(userLocation) {
+            if (!moved) {
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLng(userLocation),
+                    durationMs = 1000
                 )
-            ) {
-                Marker(
-                    state = MarkerState(position = userLocation),
-                    title = "You",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
-                    rotation = userBearing,
-                    flat = true,
-                    zIndex = 1f
-                )
-
-                // Pin location marker (unchanged)
-                pinLocation?.let { location ->
-                    Marker(
-                        state = MarkerState(position = location),
-                        title = "Teleport Here",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                    )
-                }
-
-                // Exibe sprites aleatórios no mapa
-                randomSprites.forEach { sprite ->
-                    Circle(
-                        center = sprite.position,
-                        radius = radius.toDouble(),
-                        fillColor = Color(0x3300FF00),
-                        strokeColor = Color.Green,
-                        strokeWidth = 2f
-                    )
-
-                    Marker(
-                        state = MarkerState(position = sprite.position),
-                        title = sprite.name,
-                        icon = BitmapDescriptorFactory.fromBitmap(sprite.image)
-                    )
-                }
-
-                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.be_icon)
-                val scaledBitmap =
-                    Bitmap.createScaledBitmap(bitmap, 100, 100, false) // Ajuste o tamanho
-                val icon = BitmapDescriptorFactory.fromBitmap(scaledBitmap)
-
-                energyPools.forEach { pool ->
-                    Circle(
-                        center = pool.position,
-                        radius = radius.toDouble(),
-                        fillColor = Color(0x330000FF), // Azul com transparência
-                        strokeColor = Color.Blue, // Azul mais forte na borda
-                        strokeWidth = 2f
-                    )
-
-                    Marker(
-                        state = MarkerState(
-                            position = LatLng(
-                                pool.position.latitude - 0.0003,
-                                pool.position.longitude
-                            )
-                        ), // Deslocar ícone para baixo
-                        title = "Energy Pool (+${pool.powerValue} Power)",
-                        icon = icon
-                    )
-                }
+                moved = true
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        val context = LocalContext.current
+        val permissions = arrayOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
 
-        Row(
-
-        ) {
-            Button(onClick = {
-                pinLocation?.let {
-                    viewModel.teleportTo(it)
-                    Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT).show()
+        if (!LocationManager.hasLocationPermissions(context)) {
+            RequestLocationPermissions(
+                onPermissionsGranted = {
+                    viewModel.startLocationUpdates()
+                },
+                onPermissionsDenied = {
+                    Toast.makeText(
+                        context,
+                        "Location permissions are required for this app",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-            }) {
-                Text("Teleport To Pin")
+            )
+        }
+
+        val radius = 50f
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .border(2.dp, Color.Gray)
+            ) {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    onMapClick = { latLng ->
+                        viewModel.updatePinLocation(latLng)
+                    },
+                    properties = MapProperties(
+                        isMyLocationEnabled = false,
+                        isBuildingEnabled = true,
+                        mapType = MapType.NORMAL,
+                    ),
+                    uiSettings = MapUiSettings(
+                        myLocationButtonEnabled = false,
+                        compassEnabled = true,
+                        zoomControlsEnabled = true
+                    )
+                ) {
+                    Marker(
+                        state = MarkerState(position = userLocation),
+                        title = "You",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                        rotation = userBearing,
+                        flat = true,
+                        zIndex = 1f
+                    )
+
+                    // Pin location marker (unchanged)
+                    pinLocation?.let { location ->
+                        Marker(
+                            state = MarkerState(position = location),
+                            title = "Teleport Here",
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                        )
+                    }
+
+                    // Exibe sprites aleatórios no mapa
+                    randomSprites.forEach { sprite ->
+                        Circle(
+                            center = sprite.position,
+                            radius = radius.toDouble(),
+                            fillColor = Color(0x3300FF00),
+                            strokeColor = Color.Green,
+                            strokeWidth = 2f
+                        )
+
+                        Marker(
+                            state = MarkerState(position = sprite.position),
+                            title = sprite.name,
+                            icon = BitmapDescriptorFactory.fromBitmap(sprite.image)
+                        )
+                    }
+
+                    val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.be_icon)
+                    val scaledBitmap =
+                        Bitmap.createScaledBitmap(bitmap, 100, 100, false) // Ajuste o tamanho
+                    val icon = BitmapDescriptorFactory.fromBitmap(scaledBitmap)
+
+                    energyPools.forEach { pool ->
+                        Circle(
+                            center = pool.position,
+                            radius = radius.toDouble(),
+                            fillColor = Color(0x330000FF), // Azul com transparência
+                            strokeColor = Color.Blue, // Azul mais forte na borda
+                            strokeWidth = 2f
+                        )
+
+                        Marker(
+                            state = MarkerState(
+                                position = LatLng(
+                                    pool.position.latitude - 0.0003,
+                                    pool.position.longitude
+                                )
+                            ), // Deslocar ícone para baixo
+                            title = "Energy Pool (+${pool.powerValue} Power)",
+                            icon = icon
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = { viewModel.resetLocation() }) {
-                Text("Go Back Home")
+            Row(
+
+            ) {
+                Button(onClick = {
+                    pinLocation?.let {
+                        viewModel.teleportTo(it)
+                        Toast.makeText(context, "Teleported Successfully", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }) {
+                    Text("Teleport To Pin")
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Button(onClick = { viewModel.resetLocation() }) {
+                    Text("Go Back Home")
+                }
             }
         }
     }

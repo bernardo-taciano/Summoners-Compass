@@ -26,6 +26,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -95,24 +98,18 @@ fun TradingScreen(
         viewModel.getTrades()
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Trading") },
-                navigationIcon = {
-                    IconButton(onClick = { navController?.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+    Scaffold{ innerPadding ->
         Column(
-            modifier = Modifier.padding(paddingValues)
+            modifier = modifier
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = "Trades",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
             // Tab Row
             TabRow(selectedTabIndex = selectedTabIndex) {
                 tabs.forEachIndexed { index, title ->
@@ -163,13 +160,13 @@ fun NewTrade(
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Select Friend")
-
         FriendsDropdown(
             viewModel = viewModel,
             selectedFriend = selectedFriend,
             onFriendSelected = { selectedFriend = it }
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         if (selectedFriend != null) {
             ItemsDropdown(
@@ -178,6 +175,8 @@ fun NewTrade(
                 onItemSelected = { yourSelectedItem = it }
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             FriendItemsDropdown(
                 viewModel = viewModel,
                 selectedItem = friendSelectedItem,
@@ -185,9 +184,15 @@ fun NewTrade(
                 email = selectedFriend!!.email
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             DatePicker(onDateSelected = { tradeDate = it })
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             TimePicker(onTimeSelected = { tradeTime = it })
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Column(
                 modifier = Modifier
@@ -195,6 +200,14 @@ fun NewTrade(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(
+                    text = "Pick a location for the trade",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -239,7 +252,6 @@ fun NewTrade(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePicker(
     onDateSelected: (String) -> Unit
@@ -247,7 +259,9 @@ fun DatePicker(
     val context = LocalContext.current
     val selectedDate = remember { mutableStateOf("") }
 
-    Button(onClick = {
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = {
         val calendar = Calendar.getInstance()
 
         val datePicker = DatePickerDialog(
@@ -264,18 +278,26 @@ fun DatePicker(
 
         datePicker.show()
     }) {
+        Icon(
+            imageVector = Icons.Default.CalendarMonth,
+            contentDescription = "Crafting icon",
+            tint = MaterialTheme.colorScheme.onPrimary
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(if (selectedDate.value.isEmpty()) "Pick Date" else selectedDate.value)
     }
 }
 
 @Composable
 fun TimePicker(
-    onTimeSelected: (String) -> Unit // Callback for selected time
+    onTimeSelected: (String) -> Unit
 ) {
     val context = LocalContext.current
     val selectedTime = remember { mutableStateOf("") }
 
-    Button(onClick = {
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = {
         val calendar = Calendar.getInstance()
         val timePickerDialog = TimePickerDialog(
             context,
@@ -290,6 +312,12 @@ fun TimePicker(
         )
         timePickerDialog.show()
     }) {
+        Icon(
+            imageVector = Icons.Default.AccessTime,
+            contentDescription = "Crafting icon",
+            tint = MaterialTheme.colorScheme.onPrimary
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(if (selectedTime.value.isEmpty()) "Pick Time" else selectedTime.value)
     }
 }

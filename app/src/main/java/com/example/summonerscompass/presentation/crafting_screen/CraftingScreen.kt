@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +27,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -122,41 +125,55 @@ fun CraftingScreen(
                 }
 
                 Text(
-                    text = "Crafting System",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(16.dp)
+                    text = "Items",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
-                if (cameraPermissionGranted) {
-                    Button(onClick = { launcher.launch(null) }) {
-                        Text("Scan Item")
-                    }
-                }
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Button(onClick = { navController?.navigate(Routes.tradingScreen) }) {
-                    Text("Trade")
-                }
-
-                Text(
-                    text = "Inventory",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(16.dp)
-                )
-
-
-                Button(
-                    onClick = {
-                        if (selectedItems.size == 2) {
-                            val selected = selectedItems.toList()
-                            viewModel.combineItems(selected[0], selected[1])
-                            selectedItems.clear()
-                        } else {
-                            Toast.makeText(context, "Invalid selection", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.padding(16.dp)
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Combine Items")
+                    Button(
+                        onClick = {
+                            if (selectedItems.size == 2) {
+                                val selected = selectedItems.toList()
+                                viewModel.combineItems(selected[0], selected[1])
+                                selectedItems.clear()
+                            } else {
+                                Toast.makeText(context, "Invalid selection", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        },
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Handyman,
+                                contentDescription = "Crafting icon",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Combine Items")
+                        }
+
+                    }
+
+                    if (cameraPermissionGranted) {
+                        Button(onClick = { launcher.launch(null) }) {
+                            Icon(
+                                imageVector = Icons.Default.Camera,
+                                contentDescription = "Crafting icon",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Scan Item")
+                        }
+                    }
                 }
 
                 LazyVerticalGrid(
@@ -215,11 +232,11 @@ fun CraftingScreen(
                                         fontSize = 12.sp
                                     )
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    
+
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Remove item",
-                                        tint = Color.White,
+                                        tint = Color(0xFFCC4E3F),
                                         modifier = Modifier.clickable { viewModel.removeItemFromInventory(itemId) }
                                     )
 
