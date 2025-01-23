@@ -288,7 +288,7 @@ fun MapScreen(viewModel: HomeScreenViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp)
+                    .fillMaxHeight(0.7f)
                     .clip(RoundedCornerShape(6.dp))
                     .border(2.dp, Color.Gray)
             ) {
