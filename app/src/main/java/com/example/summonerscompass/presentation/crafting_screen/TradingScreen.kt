@@ -3,6 +3,7 @@ package com.example.summonerscompass.presentation.crafting_screen
 import Item
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -510,143 +511,108 @@ fun RequestItem(request: Trade, viewModel: CraftingScreenViewModel) {
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "From: ${request.sender.name}",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
-        }
 
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(130.dp)
-                    .padding(8.dp),
-                contentAlignment = Alignment.TopCenter
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "You get:",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                TradeItemColumn("You get:", request.receivingItem, request.receivingSquare)
 
-                    Image(
-                        bitmap = request.receivingSquare.asImageBitmap(),
-                        contentDescription = "${request.receivingItem.name} Square",
-                        modifier = Modifier
-                            .size(70.dp)
-                            .padding(8.dp)
-                    )
-                    Text(
-                        text = request.receivingItem.name,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Icon(
+                    imageVector = Icons.Default.SwapHoriz,
+                    contentDescription = "Trade Icon",
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                TradeItemColumn("They get:", request.sendingItem, request.sendingSquare)
+            }
+
+            Text(
+                text = "Latitude: ${request.location.latitude}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = "Longitude: ${request.location.longitude}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    text = "Date: ${request.date}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Time: ${request.time}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
+                    onClick = { viewModel.acceptTradeRequest(request) }
+                ) {
+                    Text("Accept")
                 }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Trading icon in the center
-            Icon(
-                imageVector = Icons.Default.SwapHoriz, // Replace with a trading icon of your choice
-                contentDescription = "Trade Icon",
-                modifier = Modifier.size(32.dp), // Adjust size as needed
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .height(130.dp)
-                    .padding(8.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "They get:",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Image(
-                        bitmap = request.sendingSquare.asImageBitmap(),
-                        contentDescription = "${request.sendingItem.name} Square",
-                        modifier = Modifier
-                            .size(70.dp)
-                            .padding(8.dp)
-                    )
-                    Text(
-                        text = request.sendingItem.name,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC4E3F)),
+                    onClick = { viewModel.rejectTradeRequest(request) }
+                ) {
+                    Text("Reject")
                 }
-            }
-        }
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Location: (${request.location.latitude},${request.location.longitude})",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Date: ${request.date}",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(32.dp))
-            Text(
-                text = "Time: ${request.time}",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
-                onClick = { viewModel.acceptTradeRequest(request)}
-            ) {
-                Text("Accept")
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC4E3F)),
-                onClick = { viewModel.rejectTradeRequest(request)}
-            ) {
-                Text("Reject")
             }
         }
     }
 }
+
+@Composable
+fun TradeItemColumn(label: String, item: Item, square: Bitmap) {
+    Column(
+        modifier = Modifier.width(110.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Image(
+            bitmap = square.asImageBitmap(),
+            contentDescription = "${item.name} Square",
+            modifier = Modifier.size(70.dp)
+        )
+        Text(
+            text = item.name,
+            fontSize = 10.sp
+        )
+    }
+}
+
 
 @Composable
 fun ActiveTrades(
@@ -690,132 +656,73 @@ fun TradeItem(trade: Trade, viewModel: CraftingScreenViewModel) {
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "From: ${trade.sender.name}",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
-        }
 
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(130.dp)
-                    .padding(8.dp),
-                contentAlignment = Alignment.TopCenter
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "You get:",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                TradeItemColumn("You get:", trade.receivingItem, trade.receivingSquare)
 
-                    Image(
-                        bitmap = trade.receivingSquare.asImageBitmap(),
-                        contentDescription = "${trade.receivingItem.name} Square",
-                        modifier = Modifier
-                            .size(70.dp)
-                            .padding(8.dp)
-                    )
-                    Text(
-                        text = trade.receivingItem.name,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.SwapHoriz,
+                    contentDescription = "Trade Icon",
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                TradeItemColumn("They get:", trade.sendingItem, trade.sendingSquare)
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Trading icon in the center
-            Icon(
-                imageVector = Icons.Default.SwapHoriz, // Replace with a trading icon of your choice
-                contentDescription = "Trade Icon",
-                modifier = Modifier.size(32.dp), // Adjust size as needed
-                tint = MaterialTheme.colorScheme.primary
+            Text(
+                text = "Latitude: ${trade.location.latitude}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Longitude: ${trade.location.longitude}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-            Box(
-                modifier = Modifier
-                    .height(130.dp)
-                    .padding(8.dp),
-                contentAlignment = Alignment.TopCenter
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "They get:",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Image(
-                        bitmap = trade.sendingSquare.asImageBitmap(),
-                        contentDescription = "${trade.sendingItem.name} Square",
-                        modifier = Modifier
-                            .size(70.dp)
-                            .padding(8.dp)
-                    )
-                    Text(
-                        text = trade.sendingItem.name,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = "Date: ${trade.date}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Time: ${trade.time}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
-        }
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Location: (${trade.location.latitude},${trade.location.longitude})",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
 
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Date: ${trade.date}",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(32.dp))
-            Text(
-                text = "Time: ${trade.time}",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
-                onClick = { viewModel.confirmTrade(trade)}
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text("Confirm")
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3D9A42)),
+                    onClick = { viewModel.confirmTrade(trade) }
+                ) {
+                    Text("Confirm")
+                }
             }
         }
     }

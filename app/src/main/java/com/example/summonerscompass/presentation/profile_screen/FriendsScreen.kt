@@ -24,6 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -361,14 +364,22 @@ fun RequestItem(user: User, viewModel: FriendsScreenViewModel) {
                     shape = RoundedCornerShape(8.dp),
                     onClick = { viewModel.acceptFriendRequest(user.email) }
                 ) {
-                    Text("Accept", color = Color.White)
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Accept icon",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC4E3F)),
                     shape = RoundedCornerShape(8.dp),
                     onClick = { viewModel.rejectFriendRequest(user.email) }
                 ) {
-                    Text("Reject", color = Color.White)
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Reject icon",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
             }
         }
